@@ -51,7 +51,7 @@ def sign_up():
             new_user = User(
                 email=email,
                 username=username,
-                password=generate_password_hash(password, method='pbkdf2:sha256')  # Updated to 'pbkdf2:sha256'
+                password=generate_password_hash(password, method='pbkdf2:sha256')
             )
             db.session.add(new_user)
             db.session.commit()
@@ -89,9 +89,11 @@ def settings():
             return render_template("settings.html", user=current_user)
         
         current_user.username = new_username
-        current_user.password = generate_password_hash(new_password, method='pbkdf2:sha256')  # Updated to 'pbkdf2:sha256'
+        current_user.password = generate_password_hash(new_password, method='pbkdf2:sha256')
         db.session.commit()
 
         flash("Your settings have been updated!", category='success')
         return redirect(url_for('views.home'))
     
+    # Add this for GET requests (e.g., when users navigate to /settings)
+    return render_template("settings.html", user=current_user)
