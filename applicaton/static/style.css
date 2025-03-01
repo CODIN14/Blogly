@@ -1,0 +1,58 @@
+body {
+    background-color: #f8f9fa;
+    font-family: Arial, sans-serif;
+  }
+  .dark-mode {
+    background-color: #212529;
+    color: #ffffff;
+  }
+  .dark-mode .navbar-dark {
+    background-color: #1a1a1a !important;
+  }
+  .dark-mode .navbar-brand,
+  .dark-mode .nav-link {
+    color: #ffffff !important;
+  }
+  .dark-mode .card {
+    background-color: #343a40;
+    border-color: #495057;
+  }
+  .dark-mode .card-header,
+  .dark-mode .card-body,
+  .dark-mode .card-footer {
+    background-color: #343a40;
+    color: #ffffff;
+  }
+  .dark-mode .form-control {
+    background-color: #495057;
+    color: #ffffff;
+    border-color: #6c757d;
+  }
+  .dark-mode .form-control::placeholder {
+    color: #adb5bd;
+  }
+  .dark-mode .alert {
+    background-color: #495057;
+    color: #ffffff;
+  }
+  .dark-mode .btn-primary {
+    background-color: #0056b3;
+    border-color: #0056b3;
+  }
+  .dark-mode .btn-primary:hover {
+    background-color: #003f82;
+    border-color: #003f82;
+  }
+  .dark-mode .user-engage-container {
+    background-color: #1a1a1a;
+  }
+  .dark-mode .user-box {
+    background-color: #343a40;
+  }
+  .dark-mode .search-container .Each-user {
+    background-color: #343a40;
+    border-color: #495057;
+  }
+  .dark-mode .search-container .Each-user h5 {
+    color: #ffffff;
+  }
