@@ -1,0 +1,2231 @@
+
+=== .\Api_doc.yml ===
+openapi: 3.0.0
+info:
+  title: User Engagement API
+  version: 1.0.0
+  description: API for retrieving user engagement data in a blog or social media application.
+servers:
+  - url: http://localhost:5000
+paths:
+  /user_engagement/{user_id}:
+    get:
+      summary: Retrieve user engagement data
+      description: Retrieves user engagement data for the user with the specified ID.
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          description: The ID of the user.
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: User engagement data retrieved successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user_engagement:
+                    type: object
+                    properties:
+                      user_id:
+                        type: integer
+                      total_posts:
+                        type: integer
+                      total_comments:
+                        type: integer
+                      total_likes:
+                        type: integer
+                      total_followers:
+                        type: integer
+                      total_following:
+                        type: integer
+        '404':
+          description: User not found.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+
+
+=== .\app.py ===
+from applicaton import create_app
+
+if __name__=="__main__":
+    app = create_app()
+    app.run(debug=True)
+
+
+=== .\collect_files.py ===
+import os
+
+# Define the project directory
+project_dir = "."
+output_file = "project_files.txt"
+
+# Files/folders to ignore
+ignore_dirs = ["myenv", "__pycache__"]
+ignore_extensions = [".db", ".pyc"]
+
+# Open a file to write the contents
+with open(output_file, "w", encoding="utf-8") as outfile:
+    # Walk through the directory
+    for root, dirs, files in os.walk(project_dir):
+        # Skip ignored directories
+        dirs[:] = [d for d in dirs if d not in ignore_dirs]
+
+        for file in files:
+            # Skip ignored file extensions
+            if any(file.endswith(ext) for ext in ignore_extensions):
+                continue
+
+            file_path = os.path.join(root, file)
+            try:
+                outfile.write(f"\n=== {file_path} ===\n")
+                with open(file_path, "r", encoding="utf-8") as f:
+                    outfile.write(f.read())
+                outfile.write("\n\n")
+            except Exception as e:
+                outfile.write(f"Error reading {file_path}: {str(e)}\n\n")
+
+print(f"All file contents written to {output_file}")
+
+
+=== .\gitignore ===
+myenv/
+database.db
+__pycache__/
+*.pyc
+
+
+=== .\LICENSE ===
+MIT License
+
+Copyright (c) 2023 Muhammed Aslam A
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+
+
+
+=== .\project_files.txt ===
+
+
+
+=== .\requirements.txt ===
+Error reading .\requirements.txt: 'utf-8' codec can't decode byte 0xff in position 0: invalid start byte
+
+
+=== .\reset_password.py ===
+from applicaton import create_app, db
+from applicaton.models import User
+from werkzeug.security import generate_password_hash
+
+app = create_app()
+with app.app_context():
+    # Query all users to find your account
+    users = User.query.all()
+    for user in users:
+        print(f"ID: {user.id}, Email: {user.email}, Username: {user.username}, Password (hashed): {user.password}")
+
+    # Reset password for a specific user (replace 'your.email@example.com' with your email)
+    user = User.query.filter_by(email='colinpaul.ebby2022@vitstudent.ac.in').first()
+    if user:
+        new_password = 'coolME@1412'  # Replace with your desired new password
+        user.password = generate_password_hash(new_password, method='pbkdf2:sha256')
+        db.session.commit()
+        print(f"Password for {user.email} has been reset to: {new_password}")
+    else:
+        print("User not found")
+
+
+=== .\.git\COMMIT_EDITMSG ===
+forgot_password feature
+
+
+
+=== .\.git\config ===
+[core]
+	repositoryformatversion = 0
+	filemode = false
+	bare = false
+	logallrefupdates = true
+	symlinks = false
+	ignorecase = true
+[remote "origin"]
+	url = https://github.com/CODIN14/Blogly.git
+	fetch = +refs/heads/*:refs/remotes/origin/*
+[branch "main"]
+	remote = origin
+	merge = refs/heads/main
+
+
+
+=== .\.git\description ===
+Unnamed repository; edit this file 'description' to name the repository.
+
+
+
+=== .\.git\FETCH_HEAD ===
+16bc149015bf47cee6b292c350fe19c13ae3d952		branch 'main' of https://github.com/CODIN14/Blogly
+
+
+
+=== .\.git\HEAD ===
+ref: refs/heads/main
+
+
+
+=== .\.git\index ===
+Error reading .\.git\index: 'utf-8' codec can't decode byte 0xac in position 11: invalid start byte
+
+
+=== .\.git\ORIG_HEAD ===
+de6b1201894f6c8214f28ef024977991b7f21985
+
+
+
+=== .\.git\hooks\applypatch-msg.sample ===
+#!/bin/sh
+#
+# An example hook script to check the commit log message taken by
+# applypatch from an e-mail message.
+#
+# The hook should exit with non-zero status after issuing an
+# appropriate message if it wants to stop the commit.  The hook is
+# allowed to edit the commit message file.
+#
+# To enable this hook, rename this file to "applypatch-msg".
+
+. git-sh-setup
+commitmsg="$(git rev-parse --git-path hooks/commit-msg)"
+test -x "$commitmsg" && exec "$commitmsg" ${1+"$@"}
+:
+
+
+
+=== .\.git\hooks\commit-msg.sample ===
+#!/bin/sh
+#
+# An example hook script to check the commit log message.
+# Called by "git commit" with one argument, the name of the file
+# that has the commit message.  The hook should exit with non-zero
+# status after issuing an appropriate message if it wants to stop the
+# commit.  The hook is allowed to edit the commit message file.
+#
+# To enable this hook, rename this file to "commit-msg".
+
+# Uncomment the below to add a Signed-off-by line to the message.
+# Doing this in a hook is a bad idea in general, but the prepare-commit-msg
+# hook is more suited to it.
+#
+# SOB=$(git var GIT_AUTHOR_IDENT | sed -n 's/^\(.*>\).*$/Signed-off-by: \1/p')
+# grep -qs "^$SOB" "$1" || echo "$SOB" >> "$1"
+
+# This example catches duplicate Signed-off-by lines.
+
+test "" = "$(grep '^Signed-off-by: ' "$1" |
+	 sort | uniq -c | sed -e '/^[ 	]*1[ 	]/d')" || {
+	echo >&2 Duplicate Signed-off-by lines.
+	exit 1
+}
+
+
+
+=== .\.git\hooks\fsmonitor-watchman.sample ===
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+use IPC::Open2;
+
+# An example hook script to integrate Watchman
+# (https://facebook.github.io/watchman/) with git to speed up detecting
+# new and modified files.
+#
+# The hook is passed a version (currently 2) and last update token
+# formatted as a string and outputs to stdout a new update token and
+# all files that have been modified since the update token. Paths must
+# be relative to the root of the working tree and separated by a single NUL.
+#
+# To enable this hook, rename this file to "query-watchman" and set
+# 'git config core.fsmonitor .git/hooks/query-watchman'
+#
+my ($version, $last_update_token) = @ARGV;
+
+# Uncomment for debugging
+# print STDERR "$0 $version $last_update_token\n";
+
+# Check the hook interface version
+if ($version ne 2) {
+	die "Unsupported query-fsmonitor hook version '$version'.\n" .
+	    "Falling back to scanning...\n";
+}
+
+my $git_work_tree = get_working_dir();
+
+my $retry = 1;
+
+my $json_pkg;
+eval {
+	require JSON::XS;
+	$json_pkg = "JSON::XS";
+	1;
+} or do {
+	require JSON::PP;
+	$json_pkg = "JSON::PP";
+};
+
+launch_watchman();
+
+sub launch_watchman {
+	my $o = watchman_query();
+	if (is_work_tree_watched($o)) {
+		output_result($o->{clock}, @{$o->{files}});
+	}
+}
+
+sub output_result {
+	my ($clockid, @files) = @_;
+
+	# Uncomment for debugging watchman output
+	# open (my $fh, ">", ".git/watchman-output.out");
+	# binmode $fh, ":utf8";
+	# print $fh "$clockid\n@files\n";
+	# close $fh;
+
+	binmode STDOUT, ":utf8";
+	print $clockid;
+	print "\0";
+	local $, = "\0";
+	print @files;
+}
+
+sub watchman_clock {
+	my $response = qx/watchman clock "$git_work_tree"/;
+	die "Failed to get clock id on '$git_work_tree'.\n" .
+		"Falling back to scanning...\n" if $? != 0;
+
+	return $json_pkg->new->utf8->decode($response);
+}
+
+sub watchman_query {
+	my $pid = open2(\*CHLD_OUT, \*CHLD_IN, 'watchman -j --no-pretty')
+	or die "open2() failed: $!\n" .
+	"Falling back to scanning...\n";
+
+	# In the query expression below we're asking for names of files that
+	# changed since $last_update_token but not from the .git folder.
+	#
+	# To accomplish this, we're using the "since" generator to use the
+	# recency index to select candidate nodes and "fields" to limit the
+	# output to file names only. Then we're using the "expression" term to
+	# further constrain the results.
+	my $last_update_line = "";
+	if (substr($last_update_token, 0, 1) eq "c") {
+		$last_update_token = "\"$last_update_token\"";
+		$last_update_line = qq[\n"since": $last_update_token,];
+	}
+	my $query = <<"	END";
+		["query", "$git_work_tree", {$last_update_line
+			"fields": ["name"],
+			"expression": ["not", ["dirname", ".git"]]
+		}]
+	END
+
+	# Uncomment for debugging the watchman query
+	# open (my $fh, ">", ".git/watchman-query.json");
+	# print $fh $query;
+	# close $fh;
+
+	print CHLD_IN $query;
+	close CHLD_IN;
+	my $response = do {local $/; <CHLD_OUT>};
+
+	# Uncomment for debugging the watch response
+	# open ($fh, ">", ".git/watchman-response.json");
+	# print $fh $response;
+	# close $fh;
+
+	die "Watchman: command returned no output.\n" .
+	"Falling back to scanning...\n" if $response eq "";
+	die "Watchman: command returned invalid output: $response\n" .
+	"Falling back to scanning...\n" unless $response =~ /^\{/;
+
+	return $json_pkg->new->utf8->decode($response);
+}
+
+sub is_work_tree_watched {
+	my ($output) = @_;
+	my $error = $output->{error};
+	if ($retry > 0 and $error and $error =~ m/unable to resolve root .* directory (.*) is not watched/) {
+		$retry--;
+		my $response = qx/watchman watch "$git_work_tree"/;
+		die "Failed to make watchman watch '$git_work_tree'.\n" .
+		    "Falling back to scanning...\n" if $? != 0;
+		$output = $json_pkg->new->utf8->decode($response);
+		$error = $output->{error};
+		die "Watchman: $error.\n" .
+		"Falling back to scanning...\n" if $error;
+
+		# Uncomment for debugging watchman output
+		# open (my $fh, ">", ".git/watchman-output.out");
+		# close $fh;
+
+		# Watchman will always return all files on the first query so
+		# return the fast "everything is dirty" flag to git and do the
+		# Watchman query just to get it over with now so we won't pay
+		# the cost in git to look up each individual file.
+		my $o = watchman_clock();
+		$error = $output->{error};
+
+		die "Watchman: $error.\n" .
+		"Falling back to scanning...\n" if $error;
+
+		output_result($o->{clock}, ("/"));
+		$last_update_token = $o->{clock};
+
+		eval { launch_watchman() };
+		return 0;
+	}
+
+	die "Watchman: $error.\n" .
+	"Falling back to scanning...\n" if $error;
+
+	return 1;
+}
+
+sub get_working_dir {
+	my $working_dir;
+	if ($^O =~ 'msys' || $^O =~ 'cygwin') {
+		$working_dir = Win32::GetCwd();
+		$working_dir =~ tr/\\/\//;
+	} else {
+		require Cwd;
+		$working_dir = Cwd::cwd();
+	}
+
+	return $working_dir;
+}
+
+
+
+=== .\.git\hooks\post-update.sample ===
+#!/bin/sh
+#
+# An example hook script to prepare a packed repository for use over
+# dumb transports.
+#
+# To enable this hook, rename this file to "post-update".
+
+exec git update-server-info
+
+
+
+=== .\.git\hooks\pre-applypatch.sample ===
+#!/bin/sh
+#
+# An example hook script to verify what is about to be committed
+# by applypatch from an e-mail message.
+#
+# The hook should exit with non-zero status after issuing an
+# appropriate message if it wants to stop the commit.
+#
+# To enable this hook, rename this file to "pre-applypatch".
+
+. git-sh-setup
+precommit="$(git rev-parse --git-path hooks/pre-commit)"
+test -x "$precommit" && exec "$precommit" ${1+"$@"}
+:
+
+
+
+=== .\.git\hooks\pre-commit.sample ===
+#!/bin/sh
+#
+# An example hook script to verify what is about to be committed.
+# Called by "git commit" with no arguments.  The hook should
+# exit with non-zero status after issuing an appropriate message if
+# it wants to stop the commit.
+#
+# To enable this hook, rename this file to "pre-commit".
+
+if git rev-parse --verify HEAD >/dev/null 2>&1
+then
+	against=HEAD
+else
+	# Initial commit: diff against an empty tree object
+	against=$(git hash-object -t tree /dev/null)
+fi
+
+# If you want to allow non-ASCII filenames set this variable to true.
+allownonascii=$(git config --type=bool hooks.allownonascii)
+
+# Redirect output to stderr.
+exec 1>&2
+
+# Cross platform projects tend to avoid non-ASCII filenames; prevent
+# them from being added to the repository. We exploit the fact that the
+# printable range starts at the space character and ends with tilde.
+if [ "$allownonascii" != "true" ] &&
+	# Note that the use of brackets around a tr range is ok here, (it's
+	# even required, for portability to Solaris 10's /usr/bin/tr), since
+	# the square bracket bytes happen to fall in the designated range.
+	test $(git diff-index --cached --name-only --diff-filter=A -z $against |
+	  LC_ALL=C tr -d '[ -~]\0' | wc -c) != 0
+then
+	cat <<\EOF
+Error: Attempt to add a non-ASCII file name.
+
+This can cause problems if you want to work with people on other platforms.
+
+To be portable it is advisable to rename the file.
+
+If you know what you are doing you can disable this check using:
+
+  git config hooks.allownonascii true
+EOF
+	exit 1
+fi
+
+# If there are whitespace errors, print the offending file names and fail.
+exec git diff-index --check --cached $against --
+
+
+
+=== .\.git\hooks\pre-merge-commit.sample ===
+#!/bin/sh
+#
+# An example hook script to verify what is about to be committed.
+# Called by "git merge" with no arguments.  The hook should
+# exit with non-zero status after issuing an appropriate message to
+# stderr if it wants to stop the merge commit.
+#
+# To enable this hook, rename this file to "pre-merge-commit".
+
+. git-sh-setup
+test -x "$GIT_DIR/hooks/pre-commit" &&
+        exec "$GIT_DIR/hooks/pre-commit"
+:
+
+
+
+=== .\.git\hooks\pre-push.sample ===
+#!/bin/sh
+
+# An example hook script to verify what is about to be pushed.  Called by "git
+# push" after it has checked the remote status, but before anything has been
+# pushed.  If this script exits with a non-zero status nothing will be pushed.
+#
+# This hook is called with the following parameters:
+#
+# $1 -- Name of the remote to which the push is being done
+# $2 -- URL to which the push is being done
+#
+# If pushing without using a named remote those arguments will be equal.
+#
+# Information about the commits which are being pushed is supplied as lines to
+# the standard input in the form:
+#
+#   <local ref> <local oid> <remote ref> <remote oid>
+#
+# This sample shows how to prevent push of commits where the log message starts
+# with "WIP" (work in progress).
+
+remote="$1"
+url="$2"
+
+zero=$(git hash-object --stdin </dev/null | tr '[0-9a-f]' '0')
+
+while read local_ref local_oid remote_ref remote_oid
+do
+	if test "$local_oid" = "$zero"
+	then
+		# Handle delete
+		:
+	else
+		if test "$remote_oid" = "$zero"
+		then
+			# New branch, examine all commits
+			range="$local_oid"
+		else
+			# Update to existing branch, examine new commits
+			range="$remote_oid..$local_oid"
+		fi
+
+		# Check for WIP commit
+		commit=$(git rev-list -n 1 --grep '^WIP' "$range")
+		if test -n "$commit"
+		then
+			echo >&2 "Found WIP commit in $local_ref, not pushing"
+			exit 1
+		fi
+	fi
+done
+
+exit 0
+
+
+
+=== .\.git\hooks\pre-rebase.sample ===
+#!/bin/sh
+#
+# Copyright (c) 2006, 2008 Junio C Hamano
+#
+# The "pre-rebase" hook is run just before "git rebase" starts doing
+# its job, and can prevent the command from running by exiting with
+# non-zero status.
+#
+# The hook is called with the following parameters:
+#
+# $1 -- the upstream the series was forked from.
+# $2 -- the branch being rebased (or empty when rebasing the current branch).
+#
+# This sample shows how to prevent topic branches that are already
+# merged to 'next' branch from getting rebased, because allowing it
+# would result in rebasing already published history.
+
+publish=next
+basebranch="$1"
+if test "$#" = 2
+then
+	topic="refs/heads/$2"
+else
+	topic=`git symbolic-ref HEAD` ||
+	exit 0 ;# we do not interrupt rebasing detached HEAD
+fi
+
+case "$topic" in
+refs/heads/??/*)
+	;;
+*)
+	exit 0 ;# we do not interrupt others.
+	;;
+esac
+
+# Now we are dealing with a topic branch being rebased
+# on top of master.  Is it OK to rebase it?
+
+# Does the topic really exist?
+git show-ref -q "$topic" || {
+	echo >&2 "No such branch $topic"
+	exit 1
+}
+
+# Is topic fully merged to master?
+not_in_master=`git rev-list --pretty=oneline ^master "$topic"`
+if test -z "$not_in_master"
+then
+	echo >&2 "$topic is fully merged to master; better remove it."
+	exit 1 ;# we could allow it, but there is no point.
+fi
+
+# Is topic ever merged to next?  If so you should not be rebasing it.
+only_next_1=`git rev-list ^master "^$topic" ${publish} | sort`
+only_next_2=`git rev-list ^master           ${publish} | sort`
+if test "$only_next_1" = "$only_next_2"
+then
+	not_in_topic=`git rev-list "^$topic" master`
+	if test -z "$not_in_topic"
+	then
+		echo >&2 "$topic is already up to date with master"
+		exit 1 ;# we could allow it, but there is no point.
+	else
+		exit 0
+	fi
+else
+	not_in_next=`git rev-list --pretty=oneline ^${publish} "$topic"`
+	/usr/bin/perl -e '
+		my $topic = $ARGV[0];
+		my $msg = "* $topic has commits already merged to public branch:\n";
+		my (%not_in_next) = map {
+			/^([0-9a-f]+) /;
+			($1 => 1);
+		} split(/\n/, $ARGV[1]);
+		for my $elem (map {
+				/^([0-9a-f]+) (.*)$/;
+				[$1 => $2];
+			} split(/\n/, $ARGV[2])) {
+			if (!exists $not_in_next{$elem->[0]}) {
+				if ($msg) {
+					print STDERR $msg;
+					undef $msg;
+				}
+				print STDERR " $elem->[1]\n";
+			}
+		}
+	' "$topic" "$not_in_next" "$not_in_master"
+	exit 1
+fi
+
+<<\DOC_END
+
+This sample hook safeguards topic branches that have been
+published from being rewound.
+
+The workflow assumed here is:
+
+ * Once a topic branch forks from "master", "master" is never
+   merged into it again (either directly or indirectly).
+
+ * Once a topic branch is fully cooked and merged into "master",
+   it is deleted.  If you need to build on top of it to correct
+   earlier mistakes, a new topic branch is created by forking at
+   the tip of the "master".  This is not strictly necessary, but
+   it makes it easier to keep your history simple.
+
+ * Whenever you need to test or publish your changes to topic
+   branches, merge them into "next" branch.
+
+The script, being an example, hardcodes the publish branch name
+to be "next", but it is trivial to make it configurable via
+$GIT_DIR/config mechanism.
+
+With this workflow, you would want to know:
+
+(1) ... if a topic branch has ever been merged to "next".  Young
+    topic branches can have stupid mistakes you would rather
+    clean up before publishing, and things that have not been
+    merged into other branches can be easily rebased without
+    affecting other people.  But once it is published, you would
+    not want to rewind it.
+
+(2) ... if a topic branch has been fully merged to "master".
+    Then you can delete it.  More importantly, you should not
+    build on top of it -- other people may already want to
+    change things related to the topic as patches against your
+    "master", so if you need further changes, it is better to
+    fork the topic (perhaps with the same name) afresh from the
+    tip of "master".
+
+Let's look at this example:
+
+		   o---o---o---o---o---o---o---o---o---o "next"
+		  /       /           /           /
+		 /   a---a---b A     /           /
+		/   /               /           /
+	       /   /   c---c---c---c B         /
+	      /   /   /             \         /
+	     /   /   /   b---b C     \       /
+	    /   /   /   /             \     /
+    ---o---o---o---o---o---o---o---o---o---o---o "master"
+
+
+A, B and C are topic branches.
+
+ * A has one fix since it was merged up to "next".
+
+ * B has finished.  It has been fully merged up to "master" and "next",
+   and is ready to be deleted.
+
+ * C has not merged to "next" at all.
+
+We would want to allow C to be rebased, refuse A, and encourage
+B to be deleted.
+
+To compute (1):
+
+	git rev-list ^master ^topic next
+	git rev-list ^master        next
+
+	if these match, topic has not merged in next at all.
+
+To compute (2):
+
+	git rev-list master..topic
+
+	if this is empty, it is fully merged to "master".
+
+DOC_END
+
+
+
+=== .\.git\hooks\pre-receive.sample ===
+#!/bin/sh
+#
+# An example hook script to make use of push options.
+# The example simply echoes all push options that start with 'echoback='
+# and rejects all pushes when the "reject" push option is used.
+#
+# To enable this hook, rename this file to "pre-receive".
+
+if test -n "$GIT_PUSH_OPTION_COUNT"
+then
+	i=0
+	while test "$i" -lt "$GIT_PUSH_OPTION_COUNT"
+	do
+		eval "value=\$GIT_PUSH_OPTION_$i"
+		case "$value" in
+		echoback=*)
+			echo "echo from the pre-receive-hook: ${value#*=}" >&2
+			;;
+		reject)
+			exit 1
+		esac
+		i=$((i + 1))
+	done
+fi
+
+
+
+=== .\.git\hooks\prepare-commit-msg.sample ===
+#!/bin/sh
+#
+# An example hook script to prepare the commit log message.
+# Called by "git commit" with the name of the file that has the
+# commit message, followed by the description of the commit
+# message's source.  The hook's purpose is to edit the commit
+# message file.  If the hook fails with a non-zero status,
+# the commit is aborted.
+#
+# To enable this hook, rename this file to "prepare-commit-msg".
+
+# This hook includes three examples. The first one removes the
+# "# Please enter the commit message..." help message.
+#
+# The second includes the output of "git diff --name-status -r"
+# into the message, just before the "git status" output.  It is
+# commented because it doesn't cope with --amend or with squashed
+# commits.
+#
+# The third example adds a Signed-off-by line to the message, that can
+# still be edited.  This is rarely a good idea.
+
+COMMIT_MSG_FILE=$1
+COMMIT_SOURCE=$2
+SHA1=$3
+
+/usr/bin/perl -i.bak -ne 'print unless(m/^. Please enter the commit message/..m/^#$/)' "$COMMIT_MSG_FILE"
+
+# case "$COMMIT_SOURCE,$SHA1" in
+#  ,|template,)
+#    /usr/bin/perl -i.bak -pe '
+#       print "\n" . `git diff --cached --name-status -r`
+# 	 if /^#/ && $first++ == 0' "$COMMIT_MSG_FILE" ;;
+#  *) ;;
+# esac
+
+# SOB=$(git var GIT_COMMITTER_IDENT | sed -n 's/^\(.*>\).*$/Signed-off-by: \1/p')
+# git interpret-trailers --in-place --trailer "$SOB" "$COMMIT_MSG_FILE"
+# if test -z "$COMMIT_SOURCE"
+# then
+#   /usr/bin/perl -i.bak -pe 'print "\n" if !$first_line++' "$COMMIT_MSG_FILE"
+# fi
+
+
+
+=== .\.git\hooks\push-to-checkout.sample ===
+#!/bin/sh
+
+# An example hook script to update a checked-out tree on a git push.
+#
+# This hook is invoked by git-receive-pack(1) when it reacts to git
+# push and updates reference(s) in its repository, and when the push
+# tries to update the branch that is currently checked out and the
+# receive.denyCurrentBranch configuration variable is set to
+# updateInstead.
+#
+# By default, such a push is refused if the working tree and the index
+# of the remote repository has any difference from the currently
+# checked out commit; when both the working tree and the index match
+# the current commit, they are updated to match the newly pushed tip
+# of the branch. This hook is to be used to override the default
+# behaviour; however the code below reimplements the default behaviour
+# as a starting point for convenient modification.
+#
+# The hook receives the commit with which the tip of the current
+# branch is going to be updated:
+commit=$1
+
+# It can exit with a non-zero status to refuse the push (when it does
+# so, it must not modify the index or the working tree).
+die () {
+	echo >&2 "$*"
+	exit 1
+}
+
+# Or it can make any necessary changes to the working tree and to the
+# index to bring them to the desired state when the tip of the current
+# branch is updated to the new commit, and exit with a zero status.
+#
+# For example, the hook can simply run git read-tree -u -m HEAD "$1"
+# in order to emulate git fetch that is run in the reverse direction
+# with git push, as the two-tree form of git read-tree -u -m is
+# essentially the same as git switch or git checkout that switches
+# branches while keeping the local changes in the working tree that do
+# not interfere with the difference between the branches.
+
+# The below is a more-or-less exact translation to shell of the C code
+# for the default behaviour for git's push-to-checkout hook defined in
+# the push_to_deploy() function in builtin/receive-pack.c.
+#
+# Note that the hook will be executed from the repository directory,
+# not from the working tree, so if you want to perform operations on
+# the working tree, you will have to adapt your code accordingly, e.g.
+# by adding "cd .." or using relative paths.
+
+if ! git update-index -q --ignore-submodules --refresh
+then
+	die "Up-to-date check failed"
+fi
+
+if ! git diff-files --quiet --ignore-submodules --
+then
+	die "Working directory has unstaged changes"
+fi
+
+# This is a rough translation of:
+#
+#   head_has_history() ? "HEAD" : EMPTY_TREE_SHA1_HEX
+if git cat-file -e HEAD 2>/dev/null
+then
+	head=HEAD
+else
+	head=$(git hash-object -t tree --stdin </dev/null)
+fi
+
+if ! git diff-index --quiet --cached --ignore-submodules $head --
+then
+	die "Working directory has staged changes"
+fi
+
+if ! git read-tree -u -m "$commit"
+then
+	die "Could not update working tree to new HEAD"
+fi
+
+
+
+=== .\.git\hooks\sendemail-validate.sample ===
+#!/bin/sh
+
+# An example hook script to validate a patch (and/or patch series) before
+# sending it via email.
+#
+# The hook should exit with non-zero status after issuing an appropriate
+# message if it wants to prevent the email(s) from being sent.
+#
+# To enable this hook, rename this file to "sendemail-validate".
+#
+# By default, it will only check that the patch(es) can be applied on top of
+# the default upstream branch without conflicts in a secondary worktree. After
+# validation (successful or not) of the last patch of a series, the worktree
+# will be deleted.
+#
+# The following config variables can be set to change the default remote and
+# remote ref that are used to apply the patches against:
+#
+#   sendemail.validateRemote (default: origin)
+#   sendemail.validateRemoteRef (default: HEAD)
+#
+# Replace the TODO placeholders with appropriate checks according to your
+# needs.
+
+validate_cover_letter () {
+	file="$1"
+	# TODO: Replace with appropriate checks (e.g. spell checking).
+	true
+}
+
+validate_patch () {
+	file="$1"
+	# Ensure that the patch applies without conflicts.
+	git am -3 "$file" || return
+	# TODO: Replace with appropriate checks for this patch
+	# (e.g. checkpatch.pl).
+	true
+}
+
+validate_series () {
+	# TODO: Replace with appropriate checks for the whole series
+	# (e.g. quick build, coding style checks, etc.).
+	true
+}
+
+# main -------------------------------------------------------------------------
+
+if test "$GIT_SENDEMAIL_FILE_COUNTER" = 1
+then
+	remote=$(git config --default origin --get sendemail.validateRemote) &&
+	ref=$(git config --default HEAD --get sendemail.validateRemoteRef) &&
+	worktree=$(mktemp --tmpdir -d sendemail-validate.XXXXXXX) &&
+	git worktree add -fd --checkout "$worktree" "refs/remotes/$remote/$ref" &&
+	git config --replace-all sendemail.validateWorktree "$worktree"
+else
+	worktree=$(git config --get sendemail.validateWorktree)
+fi || {
+	echo "sendemail-validate: error: failed to prepare worktree" >&2
+	exit 1
+}
+
+unset GIT_DIR GIT_WORK_TREE
+cd "$worktree" &&
+
+if grep -q "^diff --git " "$1"
+then
+	validate_patch "$1"
+else
+	validate_cover_letter "$1"
+fi &&
+
+if test "$GIT_SENDEMAIL_FILE_COUNTER" = "$GIT_SENDEMAIL_FILE_TOTAL"
+then
+	git config --unset-all sendemail.validateWorktree &&
+	trap 'git worktree remove -ff "$worktree"' EXIT &&
+	validate_series
+fi
+
+
+
+=== .\.git\hooks\update.sample ===
+#!/bin/sh
+#
+# An example hook script to block unannotated tags from entering.
+# Called by "git receive-pack" with arguments: refname sha1-old sha1-new
+#
+# To enable this hook, rename this file to "update".
+#
+# Config
+# ------
+# hooks.allowunannotated
+#   This boolean sets whether unannotated tags will be allowed into the
+#   repository.  By default they won't be.
+# hooks.allowdeletetag
+#   This boolean sets whether deleting tags will be allowed in the
+#   repository.  By default they won't be.
+# hooks.allowmodifytag
+#   This boolean sets whether a tag may be modified after creation. By default
+#   it won't be.
+# hooks.allowdeletebranch
+#   This boolean sets whether deleting branches will be allowed in the
+#   repository.  By default they won't be.
+# hooks.denycreatebranch
+#   This boolean sets whether remotely creating branches will be denied
+#   in the repository.  By default this is allowed.
+#
+
+# --- Command line
+refname="$1"
+oldrev="$2"
+newrev="$3"
+
+# --- Safety check
+if [ -z "$GIT_DIR" ]; then
+	echo "Don't run this script from the command line." >&2
+	echo " (if you want, you could supply GIT_DIR then run" >&2
+	echo "  $0 <ref> <oldrev> <newrev>)" >&2
+	exit 1
+fi
+
+if [ -z "$refname" -o -z "$oldrev" -o -z "$newrev" ]; then
+	echo "usage: $0 <ref> <oldrev> <newrev>" >&2
+	exit 1
+fi
+
+# --- Config
+allowunannotated=$(git config --type=bool hooks.allowunannotated)
+allowdeletebranch=$(git config --type=bool hooks.allowdeletebranch)
+denycreatebranch=$(git config --type=bool hooks.denycreatebranch)
+allowdeletetag=$(git config --type=bool hooks.allowdeletetag)
+allowmodifytag=$(git config --type=bool hooks.allowmodifytag)
+
+# check for no description
+projectdesc=$(sed -e '1q' "$GIT_DIR/description")
+case "$projectdesc" in
+"Unnamed repository"* | "")
+	echo "*** Project description file hasn't been set" >&2
+	exit 1
+	;;
+esac
+
+# --- Check types
+# if $newrev is 0000...0000, it's a commit to delete a ref.
+zero=$(git hash-object --stdin </dev/null | tr '[0-9a-f]' '0')
+if [ "$newrev" = "$zero" ]; then
+	newrev_type=delete
+else
+	newrev_type=$(git cat-file -t $newrev)
+fi
+
+case "$refname","$newrev_type" in
+	refs/tags/*,commit)
+		# un-annotated tag
+		short_refname=${refname##refs/tags/}
+		if [ "$allowunannotated" != "true" ]; then
+			echo "*** The un-annotated tag, $short_refname, is not allowed in this repository" >&2
+			echo "*** Use 'git tag [ -a | -s ]' for tags you want to propagate." >&2
+			exit 1
+		fi
+		;;
+	refs/tags/*,delete)
+		# delete tag
+		if [ "$allowdeletetag" != "true" ]; then
+			echo "*** Deleting a tag is not allowed in this repository" >&2
+			exit 1
+		fi
+		;;
+	refs/tags/*,tag)
+		# annotated tag
+		if [ "$allowmodifytag" != "true" ] && git rev-parse $refname > /dev/null 2>&1
+		then
+			echo "*** Tag '$refname' already exists." >&2
+			echo "*** Modifying a tag is not allowed in this repository." >&2
+			exit 1
+		fi
+		;;
+	refs/heads/*,commit)
+		# branch
+		if [ "$oldrev" = "$zero" -a "$denycreatebranch" = "true" ]; then
+			echo "*** Creating a branch is not allowed in this repository" >&2
+			exit 1
+		fi
+		;;
+	refs/heads/*,delete)
+		# delete branch
+		if [ "$allowdeletebranch" != "true" ]; then
+			echo "*** Deleting a branch is not allowed in this repository" >&2
+			exit 1
+		fi
+		;;
+	refs/remotes/*,commit)
+		# tracking branch
+		;;
+	refs/remotes/*,delete)
+		# delete tracking branch
+		if [ "$allowdeletebranch" != "true" ]; then
+			echo "*** Deleting a tracking branch is not allowed in this repository" >&2
+			exit 1
+		fi
+		;;
+	*)
+		# Anything else (is there anything else?)
+		echo "*** Update hook: unknown type of update to ref $refname of type $newrev_type" >&2
+		exit 1
+		;;
+esac
+
+# --- Finished
+exit 0
+
+
+
+=== .\.git\info\exclude ===
+# git ls-files --others --exclude-from=.git/info/exclude
+# Lines that start with '#' are comments.
+# For a project mostly in C, the following would be a good set of
+# exclude patterns (uncomment them if you want to use them):
+# *.[oa]
+# *~
+
+
+
+=== .\.git\logs\HEAD ===
+0000000000000000000000000000000000000000 f4cde3c21ec67f3a73520cf4144a2b9a474e9a32 Colin Paul <colinpaul.ebby2022@vitstudent.ac.in> 1740594755 +0530	commit (initial): initializing
+f4cde3c21ec67f3a73520cf4144a2b9a474e9a32 99723e871805e1e13214fee92efa6b7b1c29dd83 Colin Paul <colinpaul.ebby2022@vitstudent.ac.in> 1740595144 +0530	commit: Ignore virtual environment and database
+99723e871805e1e13214fee92efa6b7b1c29dd83 16bc149015bf47cee6b292c350fe19c13ae3d952 Colin Paul <colinpaul.ebby2022@vitstudent.ac.in> 1740596063 +0530	commit: corrected authentication page
+16bc149015bf47cee6b292c350fe19c13ae3d952 de6b1201894f6c8214f28ef024977991b7f21985 Colin Paul <colinpaul.ebby2022@vitstudent.ac.in> 1740763387 +0530	commit: forgot_password feature
+
+
+
+=== .\.git\logs\refs\heads\main ===
+0000000000000000000000000000000000000000 f4cde3c21ec67f3a73520cf4144a2b9a474e9a32 Colin Paul <colinpaul.ebby2022@vitstudent.ac.in> 1740594755 +0530	commit (initial): initializing
+f4cde3c21ec67f3a73520cf4144a2b9a474e9a32 99723e871805e1e13214fee92efa6b7b1c29dd83 Colin Paul <colinpaul.ebby2022@vitstudent.ac.in> 1740595144 +0530	commit: Ignore virtual environment and database
+99723e871805e1e13214fee92efa6b7b1c29dd83 16bc149015bf47cee6b292c350fe19c13ae3d952 Colin Paul <colinpaul.ebby2022@vitstudent.ac.in> 1740596063 +0530	commit: corrected authentication page
+16bc149015bf47cee6b292c350fe19c13ae3d952 de6b1201894f6c8214f28ef024977991b7f21985 Colin Paul <colinpaul.ebby2022@vitstudent.ac.in> 1740763387 +0530	commit: forgot_password feature
+
+
+
+=== .\.git\logs\refs\remotes\origin\main ===
+0000000000000000000000000000000000000000 f4cde3c21ec67f3a73520cf4144a2b9a474e9a32 Colin Paul <colinpaul.ebby2022@vitstudent.ac.in> 1740594794 +0530	update by push
+f4cde3c21ec67f3a73520cf4144a2b9a474e9a32 16bc149015bf47cee6b292c350fe19c13ae3d952 Colin Paul <colinpaul.ebby2022@vitstudent.ac.in> 1740596291 +0530	update by push
+16bc149015bf47cee6b292c350fe19c13ae3d952 de6b1201894f6c8214f28ef024977991b7f21985 Colin Paul <colinpaul.ebby2022@vitstudent.ac.in> 1740764128 +0530	update by push
+
+
+
+
+=== .\.git\refs\heads\main ===
+de6b1201894f6c8214f28ef024977991b7f21985
+
+
+
+=== .\.git\refs\remotes\origin\main ===
+de6b1201894f6c8214f28ef024977991b7f21985
+
+
+
+=== .\applicaton\authentication.py ===
+from flask import Blueprint, render_template, redirect, url_for, request, flash
+from . import db
+from .models import User
+from flask_login import login_user, logout_user, login_required, current_user
+from werkzeug.security import generate_password_hash, check_password_hash
+
+authentication = Blueprint("authentication", __name__)
+
+@authentication.route("/login", methods=["GET", "POST"])
+def log_in():
+    if request.method == "POST":
+        email = request.form.get("email")
+        password = request.form.get("password")
+        user = User.query.filter_by(email=email).first()
+        if user:
+            if check_password_hash(user.password, password):
+                flash("Logged in!")
+                login_user(user, remember=True)
+                return redirect(url_for('views.home'))
+            else:
+                flash('Password is incorrect', category='error')
+        else:
+            flash('Email does not exist', category='error')
+                    
+    return render_template("login.html", user=current_user)
+
+@authentication.route("/sign-up", methods=["GET", "POST"])
+def sign_up():
+    if request.method == "POST":
+        email = request.form.get("email")
+        username = request.form.get("username")
+        password = request.form.get("password")
+        confirm_password = request.form.get("confirm_password")
+        
+        email_exist = User.query.filter_by(email=email).first()
+        user_exist = User.query.filter_by(username=username).first()
+
+        if email_exist:
+            flash('Email is already exist', category='error')
+        elif user_exist:
+            flash('Username is already in exist', category='error')
+        elif password != confirm_password:
+            flash('Password are not matching', category='error')
+        elif len(username) < 3:
+            flash('Username is too short', category='error')
+        elif len(password) < 6:
+            flash('Password is too short', category='error')
+        elif len(email) < 4:
+            flash("Email is invalid", category='error')
+        else:
+            new_user = User(
+                email=email,
+                username=username,
+                password=generate_password_hash(password, method='pbkdf2:sha256')
+            )
+            db.session.add(new_user)
+            db.session.commit()
+            login_user(new_user, remember=True)
+            flash('User created!')
+            return redirect(url_for('views.home'))
+    return render_template("signup.html", user=current_user)
+
+@authentication.route("/logout")
+@login_required
+def log_out():
+    logout_user()
+    return redirect(url_for("views.home"))
+
+@authentication.route("/settings", methods=["GET", "POST"])
+@login_required
+def settings():
+    if request.method == "POST":
+        new_username = request.form.get("username")
+        new_password = request.form.get("password")
+        confirm_password = request.form.get("confirm_password")
+
+        user_exist = User.query.filter_by(username=new_username).first()
+        if user_exist and user_exist != current_user:
+            flash("Sorry, that username is already taken", category='error')
+            return render_template("settings.html", user=current_user)
+        if new_password != confirm_password:
+            flash("Passwords do not match, please try again.", category='error')
+            return render_template("settings.html", user=current_user)
+        if len(new_username) < 3:
+            flash('Username is too short', category='error')
+            return render_template("settings.html", user=current_user)
+        if len(new_password) < 6:
+            flash('Password is too short', category='error')
+            return render_template("settings.html", user=current_user)
+        
+        current_user.username = new_username
+        current_user.password = generate_password_hash(new_password, method='pbkdf2:sha256')
+        db.session.commit()
+
+        flash("Your settings have been updated!", category='success')
+        return redirect(url_for('views.home'))
+    
+    # Add this for GET requests (e.g., when users navigate to /settings)
+    return render_template("settings.html", user=current_user)
+
+
+=== .\applicaton\models.py ===
+from . import db 
+from flask_login import UserMixin
+from sqlalchemy.sql import func
+
+
+class Follower(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    follower_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    date_followed = db.Column(db.DateTime(timezone=True), default=func.now())
+
+class User(db.Model, UserMixin):
+    id = db.Column(db.Integer,primary_key=True)
+    email = db.Column(db.String(150),unique=True)
+    username = db.Column(db.String(150),unique=True)
+    password = db.Column(db.String(150))
+    date_created = db.Column(db.DateTime(timezone=True),default=func.now())
+    posts =  db.relationship("Post", backref="user",cascade="all, delete")
+    comments =  db.relationship("Comment", backref="user",cascade="all, delete")
+    likes =  db.relationship("Like", backref="user",cascade="all, delete")
+    followers = db.relationship("Follower", foreign_keys=[Follower.user_id], backref="followed_user", lazy="dynamic")
+    following = db.relationship("Follower", foreign_keys=[Follower.follower_id], backref="follower", lazy="dynamic")
+
+
+class Post(db.Model):
+    id = db.Column(db.Integer,primary_key=True)
+    text =db.Column(db.Text,nullable=False)
+    date_created = db.Column(db.DateTime(timezone=True),default=func.now())
+    author = db.Column(db.Integer,db.ForeignKey('user.id'),nullable = False)
+    comments =  db.relationship("Comment", backref="post",cascade="all, delete")
+    likes =  db.relationship("Like", backref="post",cascade="all, delete")
+
+    
+class Comment(db.Model):
+    id = db.Column(db.Integer,primary_key=True)
+    text =db.Column(db.String(20),nullable=False)
+    date_created = db.Column(db.DateTime(timezone=True),default=func.now())
+    author = db.Column(db.Integer,db.ForeignKey('user.id'),nullable = False)
+    post_id = db.Column(db.Integer,db.ForeignKey('post.id'),nullable = False)
+    
+class Like(db.Model):  
+    id = db.Column(db.Integer,primary_key=True)
+    date_created = db.Column(db.DateTime(timezone=True),default=func.now())
+    author = db.Column(db.Integer,db.ForeignKey('user.id'),nullable = False)
+    post_id = db.Column(db.Integer,db.ForeignKey('post.id'),nullable = False)
+    
+
+
+
+
+
+=== .\applicaton\resources.py ===
+from flask import Flask, request, jsonify
+from flask_restful import Resource, Api
+from . import db # Import the database object from the current package
+from .models import User, Post, Comment, Like, Follower # Import the models
+
+
+api = Api()
+
+class UserEngagement(Resource):
+    def get(self, user_id):
+        # Retrieve the user with the specified ID
+        user = User.query.filter_by(id=user_id).first()
+        
+        if user:
+            
+            # Get the user's name
+            user_name= user.username
+            
+            # Get the user's posts, comments, and likes
+            posts = user.posts
+            comments = user.comments
+            likes = user.likes
+
+            # Calculate the total number of comments and likes for the user
+            total_comments = len(comments)
+            total_likes = len(likes)
+
+            # Calculate the total number of followers and followed users for the user
+            total_followers = user.followers.count()
+            total_following = user.following.count()
+
+            # Create a dictionary to store the user engagement data
+            user_engagement = {
+                'username': user_name,
+                'user_id': user_id,
+                'total_posts': len(posts),
+                'total_comments': total_comments,
+                'total_likes': total_likes,
+                'total_followers': total_followers,
+                'total_following': total_following
+            }
+
+            return {'user_engagement': user_engagement}
+        else:
+            # Return an error if the user is not found
+            return {'error': 'User not found.'}, 404
+
+api.add_resource(UserEngagement, '/api/user_engagement/<int:user_id>')
+
+
+
+
+=== .\applicaton\views.py ===
+from flask import Blueprint, render_template, request, flash, redirect, url_for
+from flask_login import login_required, current_user
+from .models import Post, User, Comment, Like, Follower
+import requests
+from . import db
+
+
+views = Blueprint("views", __name__)
+
+
+@views.route("/")
+@views.route("/home")
+@login_required
+def home():
+    # Get the IDs of users that the current user is following
+    following_ids = []
+    for follower in current_user.following:
+        following_ids.append(follower.user_id)
+    # Get the posts created by users that the current user is following
+    following_posts = Post.query.filter(Post.author.in_(following_ids)).all()
+    # Get the current user's posts
+    user_posts = current_user.posts
+    # Combine the two lists of posts
+    posts = following_posts + user_posts
+    return render_template("home.html", user=current_user, posts=posts)
+
+
+@login_required
+@views.route("/create-post", methods=['GET', 'POST'])
+def create_post():
+    # Check if request method is POST
+    if request.method == "POST":
+        # Get text from request form
+        text = request.form.get('text')
+
+        # Check if text is empty
+        if not text:
+            flash("Post cannot be empty", category="error")
+        else:
+            # Create new post object with text and current user's ID
+            post = Post(text=text, author=current_user.id)
+            # Add post to database session
+            db.session.add(post)
+            # Commit changes to the database
+            db.session.commit()
+            # Flash success message
+            flash("Post created!", category='success')
+            # Redirect to home page
+            return redirect(url_for('views.home'))
+
+    # Render the create_post template
+    return render_template("create_post.html", user=current_user, User=User)
+
+
+@views.route("/delete-post/<id>")
+@login_required
+def delete_post(id):
+    # Get post with specified id
+    post = Post.query.filter_by(id=id).first()
+
+    # Check if post exists
+    if not post:
+        flash("Post does not exist", category='error')
+    else:
+        # Delete post from the database
+        db.session.delete(post)
+        # Commit changes to the database
+        db.session.commit()
+        flash('Post deleted', category="success")
+
+    # Redirect to home page
+    return redirect(url_for('views.home'))
+
+
+@views.route("/posts/<username>")
+@login_required
+def post(username):
+    # Get the user with the specified username
+    user = User.query.filter_by(username=username).first()
+    # Check if the user exists
+    if not user:
+        flash("No with that username exist", category="error")
+        redirect(url_for('views.home'))
+    # Get all posts by the user
+    posts = user.posts
+
+    user_id = user.id
+
+    # Check if the current user is following the user
+    following = Follower.query.filter_by(
+        user_id=user.id, follower_id=current_user.id).first()
+
+    # Render the posts template and pass the current user, posts, username, User, following, and user_id
+    return render_template("posts.html", user=current_user, posts=posts, username=username, User=User, following=following, user_id=user_id)
+
+
+@views.route("/create-comment/<post_id>", methods=["POST"])
+@login_required
+def create_comment(post_id):
+    # Get text from request form
+    text = request.form.get('text')
+
+    # Check if text is empty
+    if not text:
+        flash("Comment can not be empty", category="error")
+    else:
+        # Get the post with the specified id
+        post = Post.query.filter_by(id=post_id).first()
+        # Check if post exists
+        if post:
+            # Create new comment object with text, current user's ID, and post_id
+            comment = Comment(
+                text=text, author=current_user.id, post_id=post_id)
+            # Add comment to database session
+            db.session.add(comment)
+            # Commit changes to the database
+            db.session.commit()
+        else:
+            flash("Post does not exist", category="error")
+
+    # Redirect to home page
+    return redirect(url_for('views.home'))
+
+
+@views.route("/delete-comment/<comment_id>")
+@login_required
+def delete_comment(comment_id):
+    # Get the comment with the specified id
+    comment = Comment.query.filter_by(id=comment_id).first()
+
+    # Check if the comment exists
+    if not comment:
+        flash('Comment does not exist.', category='error')
+    # Check if the current user is the author of the comment or the post
+    elif current_user.id != comment.author and current_user.id != comment.post.author:
+        flash('You do not have permission to delete this comment.', category='error')
+    else:
+        # Delete the comment from the database
+        db.session.delete(comment)
+        # Commit changes to the database
+        db.session.commit()
+
+    # Redirect to the home page
+    return redirect(url_for('views.home'))
+
+
+@views.route("/like-post/<post_id>", methods=["GET"])
+@login_required
+def like(post_id):
+    # Get the post with the specified id
+    post = Post.query.filter_by(id=post_id).first()
+    # Get the like by the current user on the post
+    like = Like.query.filter_by(
+        author=current_user.id, post_id=post_id).first()
+    # Check if the post exists
+    if not post:
+        flash('Post does not exist', category='error')
+    # Check if the current user has already liked the post
+    elif like:
+        # Unlike the post
+        db.session.delete(like)
+        db.session.commit()
+    else:
+        # Create a new like
+        like = Like(author=current_user.id, post_id=post_id)
+        db.session.add(like)
+        db.session.commit()
+
+    # Redirect to the home page
+    return redirect(url_for('views.home'))
+
+
+@views.route("/follow_unfollow/<username>", methods=["POST"])
+@login_required
+def follow_unfollow(username):
+    # Get the user to follow/unfollow
+    user_to_follow = User.query.filter_by(username=username).first()
+
+    # Check if the user exist
+    if not user_to_follow:
+        flash("User does not exist", category="error")
+        return redirect(url_for("views.home"))
+    # check if user try to follow himself
+    if user_to_follow.id == current_user.id:
+        flash("You cannot follow yourself", category="error")
+        return redirect(url_for("views.home"))
+
+    # Check if the current user is already following the user
+    following = Follower.query.filter_by(
+        user_id=user_to_follow.id, follower_id=current_user.id).first()
+
+    try:
+        if following:
+            # If the current user is already following the user, unfollow them
+            db.session.delete(following)
+            db.session.commit()
+            flash(
+                f"You have unfollowed {user_to_follow.username}", category="success")
+        else:
+            # If the current user is not already following the user, follow them
+            follow = Follower(user_id=user_to_follow.id,
+                              follower_id=current_user.id)
+            db.session.add(follow)
+            db.session.commit()
+            flash(
+                f"You are now following {user_to_follow.username}", category="success")
+    except Exception as e:
+        flash("An error occurred while following the user", category="error")
+        # You may want to log the exception for debugging purposes
+        raise e
+    return redirect(url_for('views.post', username=username))
+
+
+@views.route("/search", methods=["GET", "POST"])
+@login_required
+def search():
+    if request.method == "POST":
+        # Get the search query from the form
+        query = request.form.get("query")
+
+        # Search for users with a username that contains the query
+        users = User.query.filter(User.username.like(f"%{query}%")).all()
+
+        return render_template("search.html", user=current_user, users=users)
+    else:
+        # Render the search template when accessed via GET request
+        return render_template("search.html", user=current_user)
+
+
+
+@views.route("/edit/<id>", methods=['GET', 'POST'])
+@login_required
+def edit(id):
+    # Get the post with the given ID
+    post = Post.query.get(id)
+
+    # Check if the post exists and if the current user is the author
+    if not post or current_user.id != post.author:
+        flash("Post does not exist or you do not have permission to edit it",
+              category="error")
+        return redirect(url_for('views.home'))
+
+    # If the request method is GET, render the edit form
+    if request.method == "GET":
+        return render_template("edit.html", user=current_user, post=post)
+
+    # If the request method is POST, update the post with the new data
+    if request.method == "POST":
+        text = request.form.get('text')
+        if not text:
+            flash("Post cannot be empty", category="error")
+        else:
+            post.text = text
+            db.session.commit()
+            flash("Post updated!", category='success')
+            return redirect(url_for('views.home'))
+
+
+@views.route('/user_engagement/<int:user_id>')
+def user_engagement(user_id):
+    # Retrieve the user engagement data from the API
+    user_engagement = requests.get(
+        f'http://localhost:5000/api/user_engagement/{user_id}').json()
+    nested_dict = user_engagement['user_engagement']
+    # Render the user engagement template and pass the data to it
+    return render_template('user_engagement.html', user_engagement=nested_dict, user=current_user)
+
+
+
+=== .\applicaton\__init__.py ===
+# Import necessary modules and libraries
+from flask import Flask
+from flask_sqlalchemy import SQLAlchemy
+from os import path
+from flask_login import LoginManager
+
+# Create a SQLAlchemy object for database management
+db = SQLAlchemy()
+
+def create_app():
+    # Create a Flask app instance
+    app = Flask(__name__)
+    # Set the secret key for the app
+    app.config['SECRET_KEY'] = "perfetch"
+    # Set the database URI for the app
+    app.config['SQLALCHEMY_DATABASE_URI'] = "sqlite:///database.db"
+
+    # Initialize the SQLAlchemy object with the app
+    db.init_app(app)
+    # Push the app context
+    app.app_context().push()
+    # Import and initialize the API module
+    from .resources import api
+    api.init_app(app)
+
+    # Import and register the views blueprint
+    from .views import views
+    app.register_blueprint(views,url_prefix="/")
+    
+    # Import and register the authentication blueprint
+    from .authentication import authentication
+    app.register_blueprint(authentication,url_prefix="/")
+
+    # Import the models
+    from .models import User,Post,Comment,Like,Follower
+    # Create the database if it does not exist
+    create_database(app)
+    
+    # Initialize the LoginManager
+    login_manager = LoginManager()
+    login_manager.login_view = "authentication.log_in"
+    login_manager.init_app(app)
+    
+    # Define a user loader function for the LoginManager
+    @login_manager.user_loader
+    def load_user(id):
+        return User.query.get(int(id))
+        
+    # Return the app instance
+    return app
+
+def create_database(app):
+    # Check if the database file exists
+    if not path.exists("database.db"):
+        with app.app_context():
+            db.create_all()  # Remove app=app, use app context instead
+        print("Created database!")
+
+
+
+=== .\applicaton\templates\create_post.html ===
+{% extends "nav.html"%}
+{% block title %}{% endblock %}
+{% block content %}
+<h1 align="center">Make a Post</h1>
+
+<form method="POST">
+    <textarea name ="text" id="text" class="form-control"></textarea>
+    <br/>
+    <div align="center">
+        <button type="submit" class="btn btn-lg btn-primary">Post</button>
+    </div>
+</form>
+<br>
+<div align="center">
+    <a href="\home"><button type="button" class=class="btn btn-lg btn-secondary">Back</button></a>
+
+</div>
+{% endblock %}
+
+
+
+=== .\applicaton\templates\edit.html ===
+{% extends "nav.html" %}
+{% block title %}Edit Post{% endblock %}
+{% block content %}
+<h1 align="center">Edit Post</h1>
+<form method="POST" action="{{ url_for('views.edit', id=post.id) }}">
+  <div class="form-group">
+    <label for="text">Post Text</label>
+    <textarea class="form-control" id="text" name="text" rows="3">{{ post.text }}</textarea>
+  </div>
+  <button type="submit" class="btn btn-primary">Update</button>
+  <a href="{{ url_for('views.home') }}"><button type="button" class="btn btn-secondary">Cancel</button></a>
+</form>
+{% endblock %}
+
+
+=== .\applicaton\templates\home.html ===
+{% extends "posts_div.html" %} {% block title %}Home{% endblock %} 
+
+
+=== .\applicaton\templates\login.html ===
+{% extends "nav.html"%}{% block title %}Login{% endblock %}
+{% block content %}
+<form method="POST">
+    <h3 align="center">Login</h3>
+    <div class="form-group">
+        <label for="email">Email Address</label>
+        <input type="text" id="email" name="email" class="form-control" placeholder="Enter Email" />
+        <label for="password">Password</label>
+        <input type="password" id="password" name="password" class="form-control" placeholder="Enter Password" />
+        <br />
+        <div align="center">
+            <button class="btn btn-primary" type="submit">Login</button>
+        </div>
+    </div>
+</form>
+
+{% endblock %}
+
+
+
+=== .\applicaton\templates\nav.html ===
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- CSS only -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet"
+    integrity="sha384-rbsA2VBKQhggwzxH7pPCaAqO46MgnOM80zW1RWuH61DGLwZJEdK2Kadq2F9CUG65" crossorigin="anonymous">
+  <script src="https://kit.fontawesome.com/8590cd34e6.js" crossorigin="anonymous"></script>
+  <title>{% block title %}{% endblock %}</title>
+</head>
+
+<body>
+  <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container-fluid">
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbar">
+        <div class="navbar-nav">
+          <a class="nav-item nav-link" href="/home">Home</a>
+          {% if user.is_authenticated %}
+          <a class="nav-item nav-link" href="/logout">Logout</a>
+          <div style="position: absolute;right: 57px;">
+            <form action="{{ url_for('views.search') }}" method="POST" class="d-flex" role="search">
+              <input type="search" placeholder="Search..." name="query" class="form-control me-2">
+            </form>
+          </div>
+          <div class="btn-group">
+            <button type="button" class="btn btn-sm btn-primary dropdown-toggle" data-bs-toggle="dropdown"></button>
+            <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+              <li>
+                <a href="{{ url_for('views.post', username=user.username) }}" class="dropdown-item">My Profile</a>
+                <a href="/settings" class="dropdown-item">Settings</a>
+              </li>
+            </ul>
+          </div>
+
+          {% else %}
+          <a class="nav-item nav-link" href="/login">Login</a>
+          <a class="nav-item nav-link" href="/sign-up">Sign Up</a>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </nav>
+  {% with messages = get_flashed_messages(with_categories=True) %}
+  {% if messages %}
+  {% for category, message in messages %}
+  {% if category == "error" %}
+  <div class="alert alert-danger alter-dismissible fade show" role="alert">
+    {{ message }}
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  </div>
+  {% else %}
+  <div class="alert alert-success alter-dismissible fade show" role="alert">
+    {{ message }}
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  </div>
+  {% endif %}
+
+  {% endfor %}
+  {% endif %}
+  {% endwith %}
+  <div class="container">{% block content %}{% endblock %}<div>
+      <!-- JavaScript Bundle with Popper -->
+      <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-kenU1KFdBIe4zVF0s0G1M5b4hcpxyD9F7jL+jjXkk+Q2h455rYXK/7HAuoJl+0I4"
+        crossorigin="anonymous"></script>
+
+</body>
+
+</html>
+
+
+=== .\applicaton\templates\posts.html ===
+{% extends "posts_div.html" %}
+{% block title %}{{ username }}'s Posts{% endblock %}
+{% block header %}
+
+<h1 align="center">{{ username }}'s Posts</h1>
+<div style="
+display: flex;
+justify-content: space-between;
+">
+<a href="{{ url_for('views.user_engagement', user_id=user_id) }}" class="btn btn-primary btn-lg" style="position:relative; right:0; top:0; margin-bottom: 10px;">User Engagement</a>
+{% if username != current_user.username %}
+
+<form action="{{ url_for('views.follow_unfollow', username=username) }}" method="POST">
+    {% if following %}
+    <button type="submit" class="btn btn-primary btn-lg" style="position:relative; right:0; top:0; margin-bottom: 10px;">Unfollow</button>
+    {% else %}
+    <button type="submit" class="btn btn-primary btn-lg" style="position:relative; right:0; top:0; margin-bottom: 10px;">Follow</button>
+    {% endif %}
+</form>
+{% endif %}
+  <!-- Add a link to the user engagement page --> 
+  
+</div>  
+{% endblock %}
+
+{% block footer %}
+
+<div align="center">
+    <a href="\home"><button type="button" class="btn btn-primary btn-lg">Back</button></a>
+</div>
+{% endblock %}
+
+
+=== .\applicaton\templates\posts_div.html ===
+{% extends "nav.html" %} {% block title %}Home{% endblock %} {% block content
+%}
+<h1 align="center">{% block header %}Posts{% endblock %}</h1>
+<div id="posts">
+  {% for post in posts %}
+  <div class="card border-dark">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <a href="/posts/{{post.user.username}}">{{post.user.username}}</a>
+      <div>
+        {{post.likes|length}}
+        <a href="/like-post/{{post.id}}"><i class="fa-regular fa-thumbs-up"></i></a>
+        {% if user.id == post.author %}
+        <div class="btn-group">
+          <button type="button" class="btn btn-sm btn-primary dropdown-toggle" data-bs-toggle="dropdown"></button>
+          <ul class="dropdown-menu">
+            <li>
+              <a href="/delete-post/{{post.id}}" class="dropdown-item">Delete</a>
+              <a href="{{ url_for('views.edit', id=post.id) }}" class="dropdown-item">Edit</a>
+            </li>
+          </ul>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="card-text">{{post.text}}</div>
+      <br />
+      <div class="collapse" id="comments-{{post.id}}">
+        <div class="card">
+          <div class="card-body" id="comments-expanded-{{post.id}}">
+            {% for comment in post.comments %}
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <a href="/posts/{{comment.user.username}}">{{comment.user.username}}</a>: {{comment.text}}
+              </div>
+              <div>
+                <small class="text-muted"> {{comment.date_created}}</small>
+                {% if user.id == comment.author or user.id == post.author %}
+                <div class="btn-group">
+                  <button type="button" class="btn btn-sm btn-primary dropdown-toggle"
+                    data-bs-toggle="dropdown"></button>
+                  <ul class="dropdown-menu">
+                    <li>
+                      <a href="/delete-comment/{{comment.id}}" class="dropdown-item">Delete</a>
+                    </li>
+                  </ul>
+                </div>
+                {% endif %}
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+      <p class="card-text">
+        {% if post.comments|length > 0 %}
+        <a data-bs-toggle="collapse" href="#comments-{{post.id}}" role="button">
+          <small>View {{post.comments|length}} Comments</small>
+        </a>
+        {% else %}
+        <small class="text-muted">No Comments</small>
+        {% endif %}
+      </p>
+      <form class="input-group mb-3" method="POST" action="/create-comment/{{post.id}}">
+        <input type="text" id="text" name="text" class="form-control" placeholder="Comment something!" />
+        <button type="submit" class="btn btn-primary">Comment</button>
+      </form>
+    </div>
+    <div class="card-footer text-muted">{{post.date_created}}</div>
+  </div>
+  <br />{% endfor %}
+</div>
+{% block footer %}
+<div align="center">
+  <a href="/create-post"><button type="button" class="btn btn-primary btn-lg">
+      Create a Post
+    </button></a>
+</div>
+{% endblock %} {% endblock %}
+
+
+=== .\applicaton\templates\search.html ===
+{% extends "nav.html" %}
+
+{% block content %}
+<style>
+  .search-container {
+    width: 95%;
+    margin: auto;
+  }
+  
+  .search-container .Each-user {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 50%;
+    border-style: solid;
+    border-width: 1px;
+    border-color: #80808066;
+    padding: 0px 20px;
+    margin-bottom: 20px;
+    transition: 0.2s;
+  }
+  
+  .search-container .Each-user:hover {
+    box-shadow: 1px 1px 5px 3px #00000012;
+  }
+  
+  @media (max-width:600px) {
+    .search-container .Each-user {
+      width: 90%;
+    }
+  }
+  
+  .search-container .Each-user button {
+    background-color: blue; 
+    border: none;
+    color: white;
+    height: 26px;
+    border-radius: 5px;
+    font-family: monospace;
+  }
+  
+  
+  .search-container .Each-user button:hover {
+    background: #0000ffab;
+  }
+  
+  .search-container .Each-user h5 {
+    font-family: monospace;
+    font-size: 17px;
+  }
+  
+  </style>
+  <div class='search-container'>
+    <h1>Search</h1>
+    {% if users %}
+    {% for user in users %}
+      <div class="Each-user">
+        <h5>{{ user.username }}</h5>
+        <form action="{{ url_for('views.post', username=user.username) }}" method="GET" >
+          <button type="submit">View Profile</button>
+        </form>
+      </div>
+    {% endfor %}
+    {% else %}
+      <p>No users found.</p>
+    {% endif %}
+  </div>
+{% endblock %}
+
+
+
+=== .\applicaton\templates\settings.html ===
+{% extends "nav.html" %}
+
+{% block content %}
+<h1>Change Username and Password</h1>
+
+<form method="POST" action="{{ url_for('authentication.settings') }}">
+    <div class="form-group">
+        <label for="username">Username:</label>
+        <input type="text" name="username" class="form-control" value="{{ current_user.username }}" required>
+        <br>
+        <label for="password">New Password:</label>
+        <input type="password" class="form-control" name="password" required>
+        <br>
+        <label for="confirm_password">Confirm Password:</label>
+        <input type="password" class="form-control" name="confirm_password" required>
+        <br>
+        <input type="submit" value="Update">
+    </div>
+</form>
+{% endblock %}
+
+
+=== .\applicaton\templates\signup.html ===
+{% extends "nav.html"%}{% block title %}SignUp{% endblock %}
+{% block content %}
+<form method="POST">
+    <h3 align="center">Sign Up</h3>
+    <div class="form-group">
+        <label for="email">Email Address</label>
+        <input type="text" id="email" name="email" class="form-control" placeholder="Enter Email" />
+        <label for="username">Username</label>
+        <input type="text" id="username" name="username" class="form-control" placeholder="Enter Username" />
+        <label for="password">Password</label>
+        <input type="password" id="password" name="password" class="form-control" placeholder="Enter Password" />
+        <label for="confirm_password">Confirm Password</label>
+        <input type="password" id="confirm_password" name="confirm_password" class="form-control" placeholder="Confirm Password" />
+        <br />
+        {{form}}
+        <div align="center">
+            <button class="btn btn-primary" type="submit">Sign Up</button>
+        </div>
+    </div>
+</form>
+
+{% endblock %}
+
+
+
+=== .\applicaton\templates\user_engagement.html ===
+{% extends "nav.html" %}
+{% block title %}User Engagement{% endblock %}
+{% block content %}
+<style>
+  body {
+    margin: 0;
+    box-sizing: border-box;
+    font-family: 'Work Sans', sans-serif;
+  }
+
+  h3 {
+    margin: 10px;
+    color:#2c26269e;
+  }
+
+  .user-engage-container {
+    display: flex;
+    height: 100vh;
+    align-items: center;
+    justify-content: center;
+    background-color: #f5f4f4;
+  }
+
+  .user-box {
+    width: 50%;
+    box-shadow: 0px 0px 8px 0px #a0a0f3a6;
+    border-radius: 9px;
+    text-align: center;
+    transition: 0.3s;
+  }
+
+  .user-box:hover {
+    scale: 1.01;
+  }
+
+  .user-box h1 {
+    color: #0000ff99;
+    font-size: 40px;
+  }
+
+  .user-box .userid {
+    color: red;
+    margin-bottom: 30px;
+  }
+
+  .user-box .userid span {
+    color: #a80101;
+  }
+
+  .foll {
+    display: flex;
+    align-items: center;
+    justify-content: space-evenly;
+    margin: 16px 0px;
+  }
+
+  .followers {
+    border-right: 1px solid #00000040;
+    width: 50%;
+  }
+
+  .following {
+    width: 50%;
+  }
+
+  .post-comment-like {
+    display: flex;
+    align-items: center;
+    justify-content: space-evenly;
+    height: 80px;
+  }
+
+  .posts {
+     border-right: 1px solid #00000040;
+     width: 33.33%;
+  }
+
+  .comments {
+     border-right: 1px solid #00000040;
+      width: 33.33%;
+  }
+
+  .likes {
+    width: 33.33%;
+  }
+
+
+  @media (max-width:700px) {
+    .user-box {
+      width: 77%;
+    }
+  }
+
+  @media (max-width:500px) {
+    h3 {
+      font-size: 16px;
+    }
+
+    .user-box h1 {
+      font-size: 33px;
+    }
+  }
+</style>
+
+<div class="user-engage-container">
+  <div class="user-box">
+    <h1 class="userid">{{ user_engagement['username'] }}</h1>
+    <!-- <h3 class="userid">User ID: <span>{{ user_engagement['user_id'] }}</span></h3> -->
+    <hr>
+    <div class="foll">
+        <div class="followers">
+          <h3>Followers</h3>
+          <h3>{{ user_engagement['total_followers'] }}</h3>
+        </div>
+        <div class="following">
+          <h3>Following</h3>
+          <h3>{{ user_engagement['total_following'] }}</h3>
+        </div>
+      </div>
+      <hr>
+      <div class="post-comment-like">
+        <div class="posts">
+          <h3>Posts</h3>
+          <h3>{{ user_engagement['total_posts'] }}</h3>
+        </div>
+        <div class="comments">
+          <h3>Comments</h3>
+          <h3>{{ user_engagement['total_comments'] }}</h3>
+        </div>
+        <div class="likes">
+          <h3>Likes</h3>
+          <h3>{{ user_engagement['total_likes'] }}</h3>
+        </div>
+      </div>
+    </div>
+    </div>
+    {% endblock %}
+    
+
