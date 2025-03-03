@@ -1,12 +1,10 @@
-from flask import Blueprint, render_template, request, flash, redirect, url_for
+from flask import Blueprint, render_template, request, flash, redirect, url_for, jsonify  # We need jsonify to send the list back
 from flask_login import login_required, current_user
-from .models import Post, User, Comment, Like, Follower
+from .models import Post, User, Comment, Like, Follower, Notification
 import requests
 from . import db
 
-
 views = Blueprint("views", __name__)
-
 
 @views.route("/")
 @views.route("/home")
@@ -16,14 +14,25 @@ def home():
     following_ids = []
     for follower in current_user.following:
         following_ids.append(follower.user_id)
+
     # Get the posts created by users that the current user is following
-    following_posts = Post.query.filter(Post.author.in_(following_ids)).all()
+    if following_ids:
+        following_posts = Post.query.filter(Post.author.in_(following_ids)).all()
+    else:
+        # If the user isn't following anyone, get all posts except their own
+        following_posts = Post.query.filter(Post.author != current_user.id).all()
+
     # Get the current user's posts
     user_posts = current_user.posts
-    # Combine the two lists of posts
-    posts = following_posts + user_posts
-    return render_template("home.html", user=current_user, posts=posts)
 
+    # Combine the two lists and remove duplicates based on post ID
+    posts_dict = {post.id: post for post in following_posts + user_posts}
+    posts = list(posts_dict.values())
+
+    # Sort posts by date_created (most recent first)
+    posts.sort(key=lambda x: x.date_created, reverse=True)
+
+    return render_template("home.html", user=current_user, posts=posts)
 
 @login_required
 @views.route("/create-post", methods=['GET', 'POST'])
@@ -51,7 +60,6 @@ def create_post():
     # Render the create_post template
     return render_template("create_post.html", user=current_user, User=User)
 
-
 @views.route("/delete-post/<id>")
 @login_required
 def delete_post(id):
@@ -71,7 +79,6 @@ def delete_post(id):
     # Redirect to home page
     return redirect(url_for('views.home'))
 
-
 @views.route("/posts/<username>")
 @login_required
 def post(username):
@@ -79,8 +86,8 @@ def post(username):
     user = User.query.filter_by(username=username).first()
     # Check if the user exists
     if not user:
-        flash("No with that username exist", category="error")
-        redirect(url_for('views.home'))
+        flash("No user with that username exists", category="error")
+        return redirect(url_for('views.home'))
     # Get all posts by the user
     posts = user.posts
 
@@ -90,9 +97,8 @@ def post(username):
     following = Follower.query.filter_by(
         user_id=user.id, follower_id=current_user.id).first()
 
-    # Render the posts template and pass the current user, posts, username, User, following, and user_id
-    return render_template("posts.html", user=current_user, posts=posts, username=username, User=User, following=following, user_id=user_id)
-
+    # Render the posts template and pass the current user, posts, username, User, following, user_id, and profile_user
+    return render_template("posts.html", user=current_user, posts=posts, username=username, User=User, following=following, user_id=user_id, profile_user=user)
 
 @views.route("/create-comment/<post_id>", methods=["POST"])
 @login_required
@@ -113,6 +119,13 @@ def create_comment(post_id):
                 text=text, author=current_user.id, post_id=post_id)
             # Add comment to database session
             db.session.add(comment)
+            # Create a notification for the post author (if not the same as the commenter)
+            if post.author != current_user.id:
+                notification = Notification(
+                    user_id=post.author,
+                    message=f"{current_user.username} commented on your post."
+                )
+                db.session.add(notification)
             # Commit changes to the database
             db.session.commit()
         else:
@@ -120,7 +133,6 @@ def create_comment(post_id):
 
     # Redirect to home page
     return redirect(url_for('views.home'))
-
 
 @views.route("/delete-comment/<comment_id>")
 @login_required
@@ -143,7 +155,6 @@ def delete_comment(comment_id):
     # Redirect to the home page
     return redirect(url_for('views.home'))
 
-
 @views.route("/like-post/<post_id>", methods=["GET"])
 @login_required
 def like(post_id):
@@ -164,11 +175,17 @@ def like(post_id):
         # Create a new like
         like = Like(author=current_user.id, post_id=post_id)
         db.session.add(like)
+        # Create a notification for the post author (if not the same as the liker)
+        if post.author != current_user.id:
+            notification = Notification(
+                user_id=post.author,
+                message=f"{current_user.username} liked your post."
+            )
+            db.session.add(notification)
         db.session.commit()
 
     # Redirect to the home page
     return redirect(url_for('views.home'))
-
 
 @views.route("/follow_unfollow/<username>", methods=["POST"])
 @login_required
@@ -176,11 +193,11 @@ def follow_unfollow(username):
     # Get the user to follow/unfollow
     user_to_follow = User.query.filter_by(username=username).first()
 
-    # Check if the user exist
+    # Check if the user exists
     if not user_to_follow:
         flash("User does not exist", category="error")
         return redirect(url_for("views.home"))
-    # check if user try to follow himself
+    # Check if user tries to follow themselves
     if user_to_follow.id == current_user.id:
         flash("You cannot follow yourself", category="error")
         return redirect(url_for("views.home"))
@@ -201,6 +218,13 @@ def follow_unfollow(username):
             follow = Follower(user_id=user_to_follow.id,
                               follower_id=current_user.id)
             db.session.add(follow)
+            # Create a notification for the user being followed
+            if user_to_follow.id != current_user.id:
+                notification = Notification(
+                    user_id=user_to_follow.id,
+                    message=f"{current_user.username} started following you."
+                )
+                db.session.add(notification)
             db.session.commit()
             flash(
                 f"You are now following {user_to_follow.username}", category="success")
@@ -209,7 +233,6 @@ def follow_unfollow(username):
         # You may want to log the exception for debugging purposes
         raise e
     return redirect(url_for('views.post', username=username))
-
 
 @views.route("/search", methods=["GET", "POST"])
 @login_required
@@ -226,7 +249,20 @@ def search():
         # Render the search template when accessed via GET request
         return render_template("search.html", user=current_user)
 
-
+@views.route("/search-autocomplete", methods=["GET"])
+@login_required
+def search_autocomplete():
+    # Get what the user typed (e.g., "Col")
+    query = request.args.get("query", "").strip()
+    if query:  # If the user typed something
+        # Find usernames that match (case-insensitive, e.g., "col" matches "ColinVIT")
+        users = User.query.filter(User.username.ilike(f"%{query}%")).limit(5).all()
+        # Make a list of matching usernames (e.g., ["ColinVIT"])
+        suggestions = [user.username for user in users]
+        # Send the list back as JSON (a format jQuery UI understands)
+        return jsonify(suggestions)
+    # If the user didn’t type anything, send an empty list
+    return jsonify([])
 
 @views.route("/edit/<id>", methods=['GET', 'POST'])
 @login_required
@@ -255,6 +291,21 @@ def edit(id):
             flash("Post updated!", category='success')
             return redirect(url_for('views.home'))
 
+@views.route("/notifications")
+@login_required
+def notifications():
+    # Get the current user's notifications, ordered by most recent
+    notifications = current_user.notifications.order_by(Notification.date_created.desc()).all()
+    return render_template("notifications.html", user=current_user, notifications=notifications)
+
+@views.route("/clear-notifications", methods=["POST"])
+@login_required
+def clear_notifications():
+    # Delete all notifications for the current user
+    Notification.query.filter_by(user_id=current_user.id).delete()
+    db.session.commit()
+    flash("All notifications cleared!", category="success")
+    return redirect(url_for('views.notifications'))
 
 @views.route('/user_engagement/<int:user_id>')
 def user_engagement(user_id):

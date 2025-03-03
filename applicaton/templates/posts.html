@@ -1,31 +1,37 @@
 {% extends "posts_div.html" %}
-{% block title %}{{ username }}'s Posts{% endblock %}
+{% block title %}{{ username }}'s Profile{% endblock %}
 {% block header %}
-
-<h1 align="center">{{ username }}'s Posts</h1>
-<div style="
-display: flex;
-justify-content: space-between;
-">
-<a href="{{ url_for('views.user_engagement', user_id=user_id) }}" class="btn btn-primary btn-lg" style="position:relative; right:0; top:0; margin-bottom: 10px;">User Engagement</a>
-{% if username != current_user.username %}
-
-<form action="{{ url_for('views.follow_unfollow', username=username) }}" method="POST">
-    {% if following %}
-    <button type="submit" class="btn btn-primary btn-lg" style="position:relative; right:0; top:0; margin-bottom: 10px;">Unfollow</button>
-    {% else %}
-    <button type="submit" class="btn btn-primary btn-lg" style="position:relative; right:0; top:0; margin-bottom: 10px;">Follow</button>
-    {% endif %}
-</form>
-{% endif %}
-  <!-- Add a link to the user engagement page --> 
-  
-</div>  
+<div class="container mt-4">
+    <div class="d-flex align-items-center mb-4">
+        {% if profile_user.profile_picture %}
+            <img src="{{ url_for('static', filename='uploads/' + profile_user.profile_picture) }}" alt="Profile Picture" style="width: 80px; height: 80px; border-radius: 50%; margin-right: 15px;">
+        {% else %}
+            <i class="fa-solid fa-user-circle fa-4x" style="margin-right: 15px;"></i>
+        {% endif %}
+        <div>
+            <h1>{{ username }}'s Profile</h1>
+            <p>Joined: {{ profile_user.date_created }}</p>
+            <p>Followers: {{ profile_user.followers.count() }} | Following: {{ profile_user.following.count() }}</p>
+        </div>
+    </div>
+    <div style="display: flex; justify-content: space-between;">
+        <a href="{{ url_for('views.user_engagement', user_id=user_id) }}" class="btn btn-primary btn-lg">User Engagement</a>
+        {% if username != current_user.username %}
+            <form action="{{ url_for('views.follow_unfollow', username=username) }}" method="POST">
+                {% if following %}
+                    <button type="submit" class="btn btn-primary btn-lg">Unfollow</button>
+                {% else %}
+                    <button type="submit" class="btn btn-primary btn-lg">Follow</button>
+                {% endif %}
+            </form>
+        {% endif %}
+    </div>
+    <hr>
+    <h3>{{ username }}'s Posts</h3>
+</div>
 {% endblock %}
-
 {% block footer %}
-
 <div align="center">
-    <a href="\home"><button type="button" class="btn btn-primary btn-lg">Back</button></a>
+    <a href="/home"><button type="button" class="btn btn-primary btn-lg">Back</button></a>
 </div>
 {% endblock %}
