@@ -4,9 +4,7 @@ from .models import Post, User, Comment, Like, Follower
 import requests
 from . import db
 
-
 views = Blueprint("views", __name__)
-
 
 @views.route("/")
 @views.route("/home")
@@ -23,7 +21,6 @@ def home():
     # Combine the two lists of posts
     posts = following_posts + user_posts
     return render_template("home.html", user=current_user, posts=posts)
-
 
 @login_required
 @views.route("/create-post", methods=['GET', 'POST'])
@@ -51,7 +48,6 @@ def create_post():
     # Render the create_post template
     return render_template("create_post.html", user=current_user, User=User)
 
-
 @views.route("/delete-post/<id>")
 @login_required
 def delete_post(id):
@@ -71,7 +67,6 @@ def delete_post(id):
     # Redirect to home page
     return redirect(url_for('views.home'))
 
-
 @views.route("/posts/<username>")
 @login_required
 def post(username):
@@ -79,8 +74,8 @@ def post(username):
     user = User.query.filter_by(username=username).first()
     # Check if the user exists
     if not user:
-        flash("No with that username exist", category="error")
-        redirect(url_for('views.home'))
+        flash("No user with that username exists", category="error")
+        return redirect(url_for('views.home'))  # Fixed: Added 'return' statement to prevent further execution
     # Get all posts by the user
     posts = user.posts
 
@@ -90,9 +85,8 @@ def post(username):
     following = Follower.query.filter_by(
         user_id=user.id, follower_id=current_user.id).first()
 
-    # Render the posts template and pass the current user, posts, username, User, following, and user_id
-    return render_template("posts.html", user=current_user, posts=posts, username=username, User=User, following=following, user_id=user_id)
-
+    # Render the posts template and pass the current user, posts, username, User, following, user_id, and profile_user
+    return render_template("posts.html", user=current_user, posts=posts, username=username, User=User, following=following, user_id=user_id, profile_user=user)
 
 @views.route("/create-comment/<post_id>", methods=["POST"])
 @login_required
@@ -121,7 +115,6 @@ def create_comment(post_id):
     # Redirect to home page
     return redirect(url_for('views.home'))
 
-
 @views.route("/delete-comment/<comment_id>")
 @login_required
 def delete_comment(comment_id):
@@ -142,7 +135,6 @@ def delete_comment(comment_id):
 
     # Redirect to the home page
     return redirect(url_for('views.home'))
-
 
 @views.route("/like-post/<post_id>", methods=["GET"])
 @login_required
@@ -169,18 +161,17 @@ def like(post_id):
     # Redirect to the home page
     return redirect(url_for('views.home'))
 
-
 @views.route("/follow_unfollow/<username>", methods=["POST"])
 @login_required
 def follow_unfollow(username):
     # Get the user to follow/unfollow
     user_to_follow = User.query.filter_by(username=username).first()
 
-    # Check if the user exist
+    # Check if the user exists
     if not user_to_follow:
         flash("User does not exist", category="error")
         return redirect(url_for("views.home"))
-    # check if user try to follow himself
+    # Check if user tries to follow themselves
     if user_to_follow.id == current_user.id:
         flash("You cannot follow yourself", category="error")
         return redirect(url_for("views.home"))
@@ -210,7 +201,6 @@ def follow_unfollow(username):
         raise e
     return redirect(url_for('views.post', username=username))
 
-
 @views.route("/search", methods=["GET", "POST"])
 @login_required
 def search():
@@ -225,8 +215,6 @@ def search():
     else:
         # Render the search template when accessed via GET request
         return render_template("search.html", user=current_user)
-
-
 
 @views.route("/edit/<id>", methods=['GET', 'POST'])
 @login_required
@@ -254,7 +242,6 @@ def edit(id):
             db.session.commit()
             flash("Post updated!", category='success')
             return redirect(url_for('views.home'))
-
 
 @views.route('/user_engagement/<int:user_id>')
 def user_engagement(user_id):
