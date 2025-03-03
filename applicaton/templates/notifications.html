@@ -4,6 +4,9 @@
 <div class="container mt-5">
     <h1>Notifications</h1>
     {% if notifications %}
+        <form action="{{ url_for('views.clear_notifications') }}" method="POST">
+            <button type="submit" class="btn btn-danger mb-3">Clear Notifications</button>
+        </form>
         {% for notification in notifications %}
             <div class="alert alert-info">
                 {{ notification.message }} <small>({{ notification.date_created }})</small>

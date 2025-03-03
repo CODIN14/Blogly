@@ -283,6 +283,14 @@ def notifications():
     notifications = current_user.notifications.order_by(Notification.date_created.desc()).all()
     return render_template("notifications.html", user=current_user, notifications=notifications)
 
+@views.route("/clear-notifications", methods=["POST"])
+@login_required
+def clear_notifications():
+    # Delete all notifications for the current user
+    Notification.query.filter_by(user_id=current_user.id).delete()
+    db.session.commit()
+    flash("All notifications cleared!", category="success")
+    return redirect(url_for('views.notifications'))
 
 @views.route('/user_engagement/<int:user_id>')
 def user_engagement(user_id):
