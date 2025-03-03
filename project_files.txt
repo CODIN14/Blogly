@@ -61,6 +61,21 @@ if __name__=="__main__":
     app.run(debug=True)
 
 
+=== .\check_users.py ===
+from applicaton import create_app, db
+from applicaton.models import User
+
+app = create_app()
+with app.app_context():
+    users = User.query.all()
+    if users:
+        print("Users still exist:")
+        for user in users:
+            print(f"ID: {user.id}, Email: {user.email}, Username: {user.username}")
+    else:
+        print("No users found in the database.")
+
+
 === .\collect_files.py ===
 import os
 
@@ -132,6 +147,26 @@ THE SOFTWARE.
 
 
 
+=== .\recreate_db.py ===
+from applicaton import create_app, db
+
+app = create_app()
+with app.app_context():
+    db.drop_all()  # Drop all tables (just to be sure)
+    db.create_all()
+print("Database recreated successfully!")
+
+
+=== .\recreate_pf.py ===
+from applicaton import create_app, db
+
+app = create_app()
+with app.app_context():
+    db.drop_all()  # Drop all tables (just to be sure)
+    db.create_all()
+print("Database recreated with profile_picture field!")
+
+
 === .\requirements.txt ===
 Error reading .\requirements.txt: 'utf-8' codec can't decode byte 0xff in position 0: invalid start byte
 
@@ -160,7 +195,7 @@ with app.app_context():
 
 
 === .\.git\COMMIT_EDITMSG ===
-forgot_password feature
+Fixed profile_user error in views.py for profile pictures
 
 
 
@@ -178,6 +213,8 @@ forgot_password feature
 [branch "main"]
 	remote = origin
 	merge = refs/heads/main
+[branch "feature-updates"]
+	vscode-merge-base = origin/main
 
 
 
@@ -192,12 +229,12 @@ Unnamed repository; edit this file 'description' to name the repository.
 
 
 === .\.git\HEAD ===
-ref: refs/heads/main
+ref: refs/heads/feature-updates
 
 
 
 === .\.git\index ===
-Error reading .\.git\index: 'utf-8' codec can't decode byte 0xac in position 11: invalid start byte
+Error reading .\.git\index: 'utf-8' codec can't decode byte 0xb3 in position 11: invalid start byte
 
 
 === .\.git\ORIG_HEAD ===
@@ -1144,6 +1181,17 @@ exit 0
 f4cde3c21ec67f3a73520cf4144a2b9a474e9a32 99723e871805e1e13214fee92efa6b7b1c29dd83 Colin Paul <colinpaul.ebby2022@vitstudent.ac.in> 1740595144 +0530	commit: Ignore virtual environment and database
 99723e871805e1e13214fee92efa6b7b1c29dd83 16bc149015bf47cee6b292c350fe19c13ae3d952 Colin Paul <colinpaul.ebby2022@vitstudent.ac.in> 1740596063 +0530	commit: corrected authentication page
 16bc149015bf47cee6b292c350fe19c13ae3d952 de6b1201894f6c8214f28ef024977991b7f21985 Colin Paul <colinpaul.ebby2022@vitstudent.ac.in> 1740763387 +0530	commit: forgot_password feature
+de6b1201894f6c8214f28ef024977991b7f21985 aefafa991206a0c2e9255856372808a829d7d91a Colin Paul <colinpaul.ebby2022@vitstudent.ac.in> 1740834253 +0530	commit: Backup before implementing updates
+aefafa991206a0c2e9255856372808a829d7d91a aefafa991206a0c2e9255856372808a829d7d91a Colin Paul <colinpaul.ebby2022@vitstudent.ac.in> 1740834273 +0530	checkout: moving from main to feature-updates
+aefafa991206a0c2e9255856372808a829d7d91a 7f8610242d4054624087406f93761545a5810fc5 Colin Paul <colinpaul.ebby2022@vitstudent.ac.in> 1740836093 +0530	commit: Fixed Create Post visibility and dark mode toggle
+7f8610242d4054624087406f93761545a5810fc5 b90284eff0db71a13b850a74c943fa0e15e3c2ef Colin Paul <colinpaul.ebby2022@vitstudent.ac.in> 1741001435 +0530	commit: Fixed profile_user error in views.py for profile pictures
+
+
+
+=== .\.git\logs\refs\heads\feature-updates ===
+0000000000000000000000000000000000000000 aefafa991206a0c2e9255856372808a829d7d91a Colin Paul <colinpaul.ebby2022@vitstudent.ac.in> 1740834273 +0530	branch: Created from HEAD
+aefafa991206a0c2e9255856372808a829d7d91a 7f8610242d4054624087406f93761545a5810fc5 Colin Paul <colinpaul.ebby2022@vitstudent.ac.in> 1740836093 +0530	commit: Fixed Create Post visibility and dark mode toggle
+7f8610242d4054624087406f93761545a5810fc5 b90284eff0db71a13b850a74c943fa0e15e3c2ef Colin Paul <colinpaul.ebby2022@vitstudent.ac.in> 1741001435 +0530	commit: Fixed profile_user error in views.py for profile pictures
 
 
 
@@ -1152,6 +1200,7 @@ f4cde3c21ec67f3a73520cf4144a2b9a474e9a32 99723e871805e1e13214fee92efa6b7b1c29dd8
 f4cde3c21ec67f3a73520cf4144a2b9a474e9a32 99723e871805e1e13214fee92efa6b7b1c29dd83 Colin Paul <colinpaul.ebby2022@vitstudent.ac.in> 1740595144 +0530	commit: Ignore virtual environment and database
 99723e871805e1e13214fee92efa6b7b1c29dd83 16bc149015bf47cee6b292c350fe19c13ae3d952 Colin Paul <colinpaul.ebby2022@vitstudent.ac.in> 1740596063 +0530	commit: corrected authentication page
 16bc149015bf47cee6b292c350fe19c13ae3d952 de6b1201894f6c8214f28ef024977991b7f21985 Colin Paul <colinpaul.ebby2022@vitstudent.ac.in> 1740763387 +0530	commit: forgot_password feature
+de6b1201894f6c8214f28ef024977991b7f21985 aefafa991206a0c2e9255856372808a829d7d91a Colin Paul <colinpaul.ebby2022@vitstudent.ac.in> 1740834253 +0530	commit: Backup before implementing updates
 
 
 
@@ -1162,14 +1211,9 @@ f4cde3c21ec67f3a73520cf4144a2b9a474e9a32 16bc149015bf47cee6b292c350fe19c13ae3d95
 
 
 
+=== .\.git\objects\00\0c902a2564d2d4a551edb646a9d654d9e7041b ===
+Error reading .\.git\objects\00\0c902a2564d2d4a551edb646a9d654d9e7041b: 'utf-8' codec can't decode byte 0x85 in position 2: invalid start byte
 
-=== .\.git\refs\heads\main ===
-de6b1201894f6c8214f28ef024977991b7f21985
-
-
-
-=== .\.git\refs\remotes\origin\main ===
-de6b1201894f6c8214f28ef024977991b7f21985
 
 
 
@@ -1179,6 +1223,8 @@ from . import db
 from .models import User
 from flask_login import login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.utils import secure_filename
+import os
 
 authentication = Blueprint("authentication", __name__)
 
@@ -1197,7 +1243,6 @@ def log_in():
                 flash('Password is incorrect', category='error')
         else:
             flash('Email does not exist', category='error')
-                    
     return render_template("login.html", user=current_user)
 
 @authentication.route("/sign-up", methods=["GET", "POST"])
@@ -1207,16 +1252,17 @@ def sign_up():
         username = request.form.get("username")
         password = request.form.get("password")
         confirm_password = request.form.get("confirm_password")
-        
+        profile_picture = request.files.get("profile_picture")
+
         email_exist = User.query.filter_by(email=email).first()
         user_exist = User.query.filter_by(username=username).first()
 
         if email_exist:
-            flash('Email is already exist', category='error')
+            flash('Email already exists', category='error')
         elif user_exist:
-            flash('Username is already in exist', category='error')
+            flash('Username already exists', category='error')
         elif password != confirm_password:
-            flash('Password are not matching', category='error')
+            flash('Passwords do not match', category='error')
         elif len(username) < 3:
             flash('Username is too short', category='error')
         elif len(password) < 6:
@@ -1224,10 +1270,19 @@ def sign_up():
         elif len(email) < 4:
             flash("Email is invalid", category='error')
         else:
+            profile_picture_filename = None
+            if profile_picture and profile_picture.filename:
+                profile_picture_filename = secure_filename(profile_picture.filename)
+                # Ensure the uploads directory exists
+                uploads_dir = os.path.join('applicaton', 'static', 'uploads')
+                os.makedirs(uploads_dir, exist_ok=True)
+                profile_picture.save(os.path.join(uploads_dir, profile_picture_filename))
+
             new_user = User(
                 email=email,
                 username=username,
-                password=generate_password_hash(password, method='pbkdf2:sha256')
+                password=generate_password_hash(password, method='pbkdf2:sha256'),
+                profile_picture=profile_picture_filename
             )
             db.session.add(new_user)
             db.session.commit()
@@ -1270,8 +1325,6 @@ def settings():
 
         flash("Your settings have been updated!", category='success')
         return redirect(url_for('views.home'))
-    
-    # Add this for GET requests (e.g., when users navigate to /settings)
     return render_template("settings.html", user=current_user)
 
 
@@ -1280,7 +1333,6 @@ from . import db
 from flask_login import UserMixin
 from sqlalchemy.sql import func
 
-
 class Follower(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
@@ -1288,43 +1340,38 @@ class Follower(db.Model):
     date_followed = db.Column(db.DateTime(timezone=True), default=func.now())
 
 class User(db.Model, UserMixin):
-    id = db.Column(db.Integer,primary_key=True)
-    email = db.Column(db.String(150),unique=True)
-    username = db.Column(db.String(150),unique=True)
+    id = db.Column(db.Integer, primary_key=True)
+    email = db.Column(db.String(150), unique=True)
+    username = db.Column(db.String(150), unique=True)
     password = db.Column(db.String(150))
-    date_created = db.Column(db.DateTime(timezone=True),default=func.now())
-    posts =  db.relationship("Post", backref="user",cascade="all, delete")
-    comments =  db.relationship("Comment", backref="user",cascade="all, delete")
-    likes =  db.relationship("Like", backref="user",cascade="all, delete")
+    date_created = db.Column(db.DateTime(timezone=True), default=func.now())
+    profile_picture = db.Column(db.String(150), nullable=True)  # Add this field to store the image filename
+    posts = db.relationship("Post", backref="user", cascade="all, delete")
+    comments = db.relationship("Comment", backref="user", cascade="all, delete")
+    likes = db.relationship("Like", backref="user", cascade="all, delete")
     followers = db.relationship("Follower", foreign_keys=[Follower.user_id], backref="followed_user", lazy="dynamic")
     following = db.relationship("Follower", foreign_keys=[Follower.follower_id], backref="follower", lazy="dynamic")
 
-
 class Post(db.Model):
-    id = db.Column(db.Integer,primary_key=True)
-    text =db.Column(db.Text,nullable=False)
-    date_created = db.Column(db.DateTime(timezone=True),default=func.now())
-    author = db.Column(db.Integer,db.ForeignKey('user.id'),nullable = False)
-    comments =  db.relationship("Comment", backref="post",cascade="all, delete")
-    likes =  db.relationship("Like", backref="post",cascade="all, delete")
+    id = db.Column(db.Integer, primary_key=True)
+    text = db.Column(db.Text, nullable=False)
+    date_created = db.Column(db.DateTime(timezone=True), default=func.now())
+    author = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    comments = db.relationship("Comment", backref="post", cascade="all, delete")
+    likes = db.relationship("Like", backref="post", cascade="all, delete")
 
-    
 class Comment(db.Model):
-    id = db.Column(db.Integer,primary_key=True)
-    text =db.Column(db.String(20),nullable=False)
-    date_created = db.Column(db.DateTime(timezone=True),default=func.now())
-    author = db.Column(db.Integer,db.ForeignKey('user.id'),nullable = False)
-    post_id = db.Column(db.Integer,db.ForeignKey('post.id'),nullable = False)
-    
+    id = db.Column(db.Integer, primary_key=True)
+    text = db.Column(db.String(20), nullable=False)
+    date_created = db.Column(db.DateTime(timezone=True), default=func.now())
+    author = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    post_id = db.Column(db.Integer, db.ForeignKey('post.id'), nullable=False)
+
 class Like(db.Model):  
-    id = db.Column(db.Integer,primary_key=True)
-    date_created = db.Column(db.DateTime(timezone=True),default=func.now())
-    author = db.Column(db.Integer,db.ForeignKey('user.id'),nullable = False)
-    post_id = db.Column(db.Integer,db.ForeignKey('post.id'),nullable = False)
-    
-
-
-
+    id = db.Column(db.Integer, primary_key=True)
+    date_created = db.Column(db.DateTime(timezone=True), default=func.now())
+    author = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    post_id = db.Column(db.Integer, db.ForeignKey('post.id'), nullable=False)
 
 
 === .\applicaton\resources.py ===
@@ -1387,9 +1434,7 @@ from .models import Post, User, Comment, Like, Follower
 import requests
 from . import db
 
-
 views = Blueprint("views", __name__)
-
 
 @views.route("/")
 @views.route("/home")
@@ -1406,7 +1451,6 @@ def home():
     # Combine the two lists of posts
     posts = following_posts + user_posts
     return render_template("home.html", user=current_user, posts=posts)
-
 
 @login_required
 @views.route("/create-post", methods=['GET', 'POST'])
@@ -1434,7 +1478,6 @@ def create_post():
     # Render the create_post template
     return render_template("create_post.html", user=current_user, User=User)
 
-
 @views.route("/delete-post/<id>")
 @login_required
 def delete_post(id):
@@ -1454,7 +1497,6 @@ def delete_post(id):
     # Redirect to home page
     return redirect(url_for('views.home'))
 
-
 @views.route("/posts/<username>")
 @login_required
 def post(username):
@@ -1462,8 +1504,8 @@ def post(username):
     user = User.query.filter_by(username=username).first()
     # Check if the user exists
     if not user:
-        flash("No with that username exist", category="error")
-        redirect(url_for('views.home'))
+        flash("No user with that username exists", category="error")
+        return redirect(url_for('views.home'))  # Fixed: Added 'return' statement to prevent further execution
     # Get all posts by the user
     posts = user.posts
 
@@ -1473,9 +1515,8 @@ def post(username):
     following = Follower.query.filter_by(
         user_id=user.id, follower_id=current_user.id).first()
 
-    # Render the posts template and pass the current user, posts, username, User, following, and user_id
-    return render_template("posts.html", user=current_user, posts=posts, username=username, User=User, following=following, user_id=user_id)
-
+    # Render the posts template and pass the current user, posts, username, User, following, user_id, and profile_user
+    return render_template("posts.html", user=current_user, posts=posts, username=username, User=User, following=following, user_id=user_id, profile_user=user)
 
 @views.route("/create-comment/<post_id>", methods=["POST"])
 @login_required
@@ -1504,7 +1545,6 @@ def create_comment(post_id):
     # Redirect to home page
     return redirect(url_for('views.home'))
 
-
 @views.route("/delete-comment/<comment_id>")
 @login_required
 def delete_comment(comment_id):
@@ -1525,7 +1565,6 @@ def delete_comment(comment_id):
 
     # Redirect to the home page
     return redirect(url_for('views.home'))
-
 
 @views.route("/like-post/<post_id>", methods=["GET"])
 @login_required
@@ -1552,18 +1591,17 @@ def like(post_id):
     # Redirect to the home page
     return redirect(url_for('views.home'))
 
-
 @views.route("/follow_unfollow/<username>", methods=["POST"])
 @login_required
 def follow_unfollow(username):
     # Get the user to follow/unfollow
     user_to_follow = User.query.filter_by(username=username).first()
 
-    # Check if the user exist
+    # Check if the user exists
     if not user_to_follow:
         flash("User does not exist", category="error")
         return redirect(url_for("views.home"))
-    # check if user try to follow himself
+    # Check if user tries to follow themselves
     if user_to_follow.id == current_user.id:
         flash("You cannot follow yourself", category="error")
         return redirect(url_for("views.home"))
@@ -1593,7 +1631,6 @@ def follow_unfollow(username):
         raise e
     return redirect(url_for('views.post', username=username))
 
-
 @views.route("/search", methods=["GET", "POST"])
 @login_required
 def search():
@@ -1608,8 +1645,6 @@ def search():
     else:
         # Render the search template when accessed via GET request
         return render_template("search.html", user=current_user)
-
-
 
 @views.route("/edit/<id>", methods=['GET', 'POST'])
 @login_required
@@ -1638,7 +1673,6 @@ def edit(id):
             flash("Post updated!", category='success')
             return redirect(url_for('views.home'))
 
-
 @views.route('/user_engagement/<int:user_id>')
 def user_engagement(user_id):
     # Retrieve the user engagement data from the API
@@ -1647,7 +1681,6 @@ def user_engagement(user_id):
     nested_dict = user_engagement['user_engagement']
     # Render the user engagement template and pass the data to it
     return render_template('user_engagement.html', user_engagement=nested_dict, user=current_user)
-
 
 
 === .\applicaton\__init__.py ===
@@ -1709,6 +1742,75 @@ def create_database(app):
             db.create_all()  # Remove app=app, use app context instead
         print("Created database!")
 
+
+
+=== .\applicaton\static\style.css ===
+body {
+    background-color: #f8f9fa;
+    font-family: Arial, sans-serif;
+  }
+  .dark-mode {
+    background-color: #212529;
+    color: #ffffff;
+  }
+  .dark-mode .navbar-dark {
+    background-color: #1a1a1a !important;
+  }
+  .dark-mode .navbar-brand,
+  .dark-mode .nav-link {
+    color: #ffffff !important;
+  }
+  .dark-mode .card {
+    background-color: #343a40;
+    border-color: #495057;
+  }
+  .dark-mode .card-header,
+  .dark-mode .card-body,
+  .dark-mode .card-footer {
+    background-color: #343a40;
+    color: #ffffff;
+  }
+  .dark-mode .form-control {
+    background-color: #495057;
+    color: #ffffff;
+    border-color: #6c757d;
+  }
+  .dark-mode .form-control::placeholder {
+    color: #adb5bd;
+  }
+  .dark-mode .alert {
+    background-color: #495057;
+    color: #ffffff;
+  }
+  .dark-mode .btn-primary {
+    background-color: #0056b3;
+    border-color: #0056b3;
+  }
+  .dark-mode .btn-primary:hover {
+    background-color: #003f82;
+    border-color: #003f82;
+  }
+  .dark-mode .user-engage-container {
+    background-color: #1a1a1a;
+  }
+  .dark-mode .user-box {
+    background-color: #343a40;
+  }
+  .dark-mode .search-container .Each-user {
+    background-color: #343a40;
+    border-color: #495057;
+  }
+  .dark-mode .search-container .Each-user h5 {
+    color: #ffffff;
+  }
+
+
+=== .\applicaton\static\uploads\Screenshot_2025-03-03_164342.png ===
+Error reading .\applicaton\static\uploads\Screenshot_2025-03-03_164342.png: 'utf-8' codec can't decode byte 0x89 in position 0: invalid start byte
+
+
+=== .\applicaton\static\uploads\Screenshot_2025-03-03_165608.png ===
+Error reading .\applicaton\static\uploads\Screenshot_2025-03-03_165608.png: 'utf-8' codec can't decode byte 0x89 in position 0: invalid start byte
 
 
 === .\applicaton\templates\create_post.html ===
@@ -1777,21 +1879,21 @@ def create_database(app):
 === .\applicaton\templates\nav.html ===
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
   <meta charset="UTF-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <!-- CSS only -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet"
-    integrity="sha384-rbsA2VBKQhggwzxH7pPCaAqO46MgnOM80zW1RWuH61DGLwZJEdK2Kadq2F9CUG65" crossorigin="anonymous">
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-rbsA2VBKQhggwzxH7pPCaAqO46MgnOM80zW1RWuH61DGLwZJEdK2Kadq2F9CUG65" crossorigin="anonymous">
   <script src="https://kit.fontawesome.com/8590cd34e6.js" crossorigin="anonymous"></script>
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
   <title>{% block title %}{% endblock %}</title>
 </head>
-
 <body>
   <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
     <div class="container-fluid">
+      <a class="navbar-brand" href="/home">BLOGLITE</a>
       <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar">
         <span class="navbar-toggler-icon"></span>
       </button>
@@ -1799,111 +1901,140 @@ def create_database(app):
         <div class="navbar-nav">
           <a class="nav-item nav-link" href="/home">Home</a>
           {% if user.is_authenticated %}
-          <a class="nav-item nav-link" href="/logout">Logout</a>
-          <div style="position: absolute;right: 57px;">
-            <form action="{{ url_for('views.search') }}" method="POST" class="d-flex" role="search">
-              <input type="search" placeholder="Search..." name="query" class="form-control me-2">
-            </form>
-          </div>
-          <div class="btn-group">
-            <button type="button" class="btn btn-sm btn-primary dropdown-toggle" data-bs-toggle="dropdown"></button>
-            <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-              <li>
-                <a href="{{ url_for('views.post', username=user.username) }}" class="dropdown-item">My Profile</a>
-                <a href="/settings" class="dropdown-item">Settings</a>
-              </li>
-            </ul>
-          </div>
-
+            <a class="nav-item nav-link" href="/create-post">Create Post</a> <!-- Moved inside the authenticated block -->
+            <div style="position: absolute; right: 57px;">
+              <form action="{{ url_for('views.search') }}" method="POST" class="d-flex" role="search">
+                <input type="search" placeholder="Search..." name="query" class="form-control me-2" id="search-input">
+              </form>
+            </div>
+            <div class="btn-group">
+              <button type="button" class="btn btn-sm btn-primary dropdown-toggle" data-bs-toggle="dropdown">{{ user.username }}</button>
+              <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                <li>
+                  <a href="{{ url_for('views.post', username=user.username) }}" class="dropdown-item">My Profile</a>
+                  <a href="/settings" class="dropdown-item">Settings</a>
+                  <a href="/logout" class="dropdown-item">Logout</a>
+                </li>
+              </ul>
+            </div>
           {% else %}
-          <a class="nav-item nav-link" href="/login">Login</a>
-          <a class="nav-item nav-link" href="/sign-up">Sign Up</a>
+            <a class="nav-item nav-link" href="/login">Login</a>
+            <a class="nav-item nav-link" href="/sign-up">Sign Up</a>
           {% endif %}
+          <!-- Dark Mode Toggle -->
+          <div class="form-check form-switch ms-3">
+            <input class="form-check-input" type="checkbox" id="darkModeToggle" onclick="toggleDarkMode()">
+            <label class="form-check-label text-white" for="darkModeToggle">Dark Mode</label>
+          </div>
         </div>
       </div>
     </div>
   </nav>
   {% with messages = get_flashed_messages(with_categories=True) %}
   {% if messages %}
-  {% for category, message in messages %}
-  {% if category == "error" %}
-  <div class="alert alert-danger alter-dismissible fade show" role="alert">
-    {{ message }}
-    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-  </div>
-  {% else %}
-  <div class="alert alert-success alter-dismissible fade show" role="alert">
-    {{ message }}
-    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-  </div>
-  {% endif %}
-
-  {% endfor %}
+    {% for category, message in messages %}
+      {% if category == "error" %}
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+          {{ message }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+      {% else %}
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+          {{ message }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+      {% endif %}
+    {% endfor %}
   {% endif %}
   {% endwith %}
-  <div class="container">{% block content %}{% endblock %}<div>
-      <!-- JavaScript Bundle with Popper -->
-      <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"
-        integrity="sha384-kenU1KFdBIe4zVF0s0G1M5b4hcpxyD9F7jL+jjXkk+Q2h455rYXK/7HAuoJl+0I4"
-        crossorigin="anonymous"></script>
-
+  <div class="container">{% block content %}{% endblock %}</div>
+  <!-- JavaScript Bundle with Popper -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-kenU1KFdBIe4zVF0s0G1M5b4hcpxyD9F7jL+jjXkk+Q2h455rYXK/7HAuoJl+0I4" crossorigin="anonymous"></script>
+  <!-- Dark Mode Script -->
+  <script>
+    function toggleDarkMode() {
+      document.body.classList.toggle('dark-mode');
+      if (document.body.classList.contains('dark-mode')) {
+        localStorage.setItem('theme', 'dark');
+      } else {
+        localStorage.removeItem('theme');
+      }
+    }
+    if (localStorage.getItem('theme') === 'dark') {
+      document.body.classList.add('dark-mode');
+      document.getElementById('darkModeToggle').checked = true;
+    }
+  </script>
 </body>
-
 </html>
 
 
 === .\applicaton\templates\posts.html ===
 {% extends "posts_div.html" %}
-{% block title %}{{ username }}'s Posts{% endblock %}
+{% block title %}{{ username }}'s Profile{% endblock %}
 {% block header %}
-
-<h1 align="center">{{ username }}'s Posts</h1>
-<div style="
-display: flex;
-justify-content: space-between;
-">
-<a href="{{ url_for('views.user_engagement', user_id=user_id) }}" class="btn btn-primary btn-lg" style="position:relative; right:0; top:0; margin-bottom: 10px;">User Engagement</a>
-{% if username != current_user.username %}
-
-<form action="{{ url_for('views.follow_unfollow', username=username) }}" method="POST">
-    {% if following %}
-    <button type="submit" class="btn btn-primary btn-lg" style="position:relative; right:0; top:0; margin-bottom: 10px;">Unfollow</button>
-    {% else %}
-    <button type="submit" class="btn btn-primary btn-lg" style="position:relative; right:0; top:0; margin-bottom: 10px;">Follow</button>
-    {% endif %}
-</form>
-{% endif %}
-  <!-- Add a link to the user engagement page --> 
-  
-</div>  
+<div class="container mt-4">
+    <div class="d-flex align-items-center mb-4">
+        {% if profile_user.profile_picture %}
+            <img src="{{ url_for('static', filename='uploads/' + profile_user.profile_picture) }}" alt="Profile Picture" style="width: 80px; height: 80px; border-radius: 50%; margin-right: 15px;">
+        {% else %}
+            <i class="fa-solid fa-user-circle fa-4x" style="margin-right: 15px;"></i>
+        {% endif %}
+        <div>
+            <h1>{{ username }}'s Profile</h1>
+            <p>Joined: {{ profile_user.date_created }}</p>
+            <p>Followers: {{ profile_user.followers.count() }} | Following: {{ profile_user.following.count() }}</p>
+        </div>
+    </div>
+    <div style="display: flex; justify-content: space-between;">
+        <a href="{{ url_for('views.user_engagement', user_id=user_id) }}" class="btn btn-primary btn-lg">User Engagement</a>
+        {% if username != current_user.username %}
+            <form action="{{ url_for('views.follow_unfollow', username=username) }}" method="POST">
+                {% if following %}
+                    <button type="submit" class="btn btn-primary btn-lg">Unfollow</button>
+                {% else %}
+                    <button type="submit" class="btn btn-primary btn-lg">Follow</button>
+                {% endif %}
+            </form>
+        {% endif %}
+    </div>
+    <hr>
+    <h3>{{ username }}'s Posts</h3>
+</div>
 {% endblock %}
-
 {% block footer %}
-
 <div align="center">
-    <a href="\home"><button type="button" class="btn btn-primary btn-lg">Back</button></a>
+    <a href="/home"><button type="button" class="btn btn-primary btn-lg">Back</button></a>
 </div>
 {% endblock %}
 
 
 === .\applicaton\templates\posts_div.html ===
-{% extends "nav.html" %} {% block title %}Home{% endblock %} {% block content
-%}
+{% extends "nav.html" %}
+{% block title %}Home{% endblock %}
+{% block content %}
 <h1 align="center">{% block header %}Posts{% endblock %}</h1>
 <div id="posts">
   {% for post in posts %}
-  <div class="card border-dark">
+  <div class="card border-dark" data-post-id="{{ post.id }}">
     <div class="card-header d-flex justify-content-between align-items-center">
-      <a href="/posts/{{post.user.username}}">{{post.user.username}}</a>
+      <div class="d-flex align-items-center">
+        {% if post.user.profile_picture %}
+          <img src="{{ url_for('static', filename='uploads/' + post.user.profile_picture) }}" alt="Profile Picture" style="width: 40px; height: 40px; border-radius: 50%; margin-right: 10px;">
+        {% else %}
+          <i class="fa-solid fa-user-circle fa-2x" style="margin-right: 10px;"></i>
+        {% endif %}
+        <a href="/posts/{{ post.user.username }}">{{ post.user.username }}</a>
+      </div>
       <div>
-        {{post.likes|length}}
-        <a href="/like-post/{{post.id}}"><i class="fa-regular fa-thumbs-up"></i></a>
+        <span class="like-count">{{ post.likes|length }}</span>
+        <a href="/like-post/{{ post.id }}"><i class="fa-regular fa-thumbs-up"></i></a>
         {% if user.id == post.author %}
         <div class="btn-group">
           <button type="button" class="btn btn-sm btn-primary dropdown-toggle" data-bs-toggle="dropdown"></button>
           <ul class="dropdown-menu">
             <li>
-              <a href="/delete-post/{{post.id}}" class="dropdown-item">Delete</a>
+              <a href="/delete-post/{{ post.id }}" class="dropdown-item">Delete</a>
               <a href="{{ url_for('views.edit', id=post.id) }}" class="dropdown-item">Edit</a>
             </li>
           </ul>
@@ -1912,25 +2043,24 @@ justify-content: space-between;
       </div>
     </div>
     <div class="card-body">
-      <div class="card-text">{{post.text}}</div>
+      <div class="card-text">{{ post.text }}</div>
       <br />
-      <div class="collapse" id="comments-{{post.id}}">
+      <div class="collapse" id="comments-{{ post.id }}">
         <div class="card">
-          <div class="card-body" id="comments-expanded-{{post.id}}">
+          <div class="card-body" id="comments-expanded-{{ post.id }}">
             {% for comment in post.comments %}
-            <div class="d-flex justify-content-between align-items-center">
+            <div class="d-flex justify-content-between align-items-center" data-comment-id="{{ comment.id }}">
               <div>
-                <a href="/posts/{{comment.user.username}}">{{comment.user.username}}</a>: {{comment.text}}
+                <a href="/posts/{{ comment.user.username }}">{{ comment.user.username }}</a>: {{ comment.text }}
               </div>
               <div>
-                <small class="text-muted"> {{comment.date_created}}</small>
+                <small class="text-muted">{{ comment.date_created }}</small>
                 {% if user.id == comment.author or user.id == post.author %}
                 <div class="btn-group">
-                  <button type="button" class="btn btn-sm btn-primary dropdown-toggle"
-                    data-bs-toggle="dropdown"></button>
+                  <button type="button" class="btn btn-sm btn-primary dropdown-toggle" data-bs-toggle="dropdown"></button>
                   <ul class="dropdown-menu">
                     <li>
-                      <a href="/delete-comment/{{comment.id}}" class="dropdown-item">Delete</a>
+                      <a href="/delete-comment/{{ comment.id }}" class="dropdown-item">Delete</a>
                     </li>
                   </ul>
                 </div>
@@ -1943,29 +2073,29 @@ justify-content: space-between;
       </div>
       <p class="card-text">
         {% if post.comments|length > 0 %}
-        <a data-bs-toggle="collapse" href="#comments-{{post.id}}" role="button">
-          <small>View {{post.comments|length}} Comments</small>
+        <a data-bs-toggle="collapse" href="#comments-{{ post.id }}" role="button">
+          <small>View {{ post.comments|length }} Comments</small>
         </a>
         {% else %}
         <small class="text-muted">No Comments</small>
         {% endif %}
       </p>
-      <form class="input-group mb-3" method="POST" action="/create-comment/{{post.id}}">
+      <form class="input-group mb-3" method="POST" action="/create-comment/{{ post.id }}">
         <input type="text" id="text" name="text" class="form-control" placeholder="Comment something!" />
         <button type="submit" class="btn btn-primary">Comment</button>
       </form>
     </div>
-    <div class="card-footer text-muted">{{post.date_created}}</div>
+    <div class="card-footer text-muted">{{ post.date_created }}</div>
   </div>
-  <br />{% endfor %}
+  <br />
+  {% endfor %}
 </div>
 {% block footer %}
 <div align="center">
-  <a href="/create-post"><button type="button" class="btn btn-primary btn-lg">
-      Create a Post
-    </button></a>
+  <a href="/create-post"><button type="button" class="btn btn-primary btn-lg">Create a Post</button></a>
 </div>
-{% endblock %} {% endblock %}
+{% endblock %}
+{% endblock %}
 
 
 === .\applicaton\templates\search.html ===
@@ -2064,9 +2194,10 @@ justify-content: space-between;
 
 
 === .\applicaton\templates\signup.html ===
-{% extends "nav.html"%}{% block title %}SignUp{% endblock %}
+{% extends "nav.html" %}
+{% block title %}Sign Up{% endblock %}
 {% block content %}
-<form method="POST">
+<form method="POST" enctype="multipart/form-data">
     <h3 align="center">Sign Up</h3>
     <div class="form-group">
         <label for="email">Email Address</label>
@@ -2077,16 +2208,15 @@ justify-content: space-between;
         <input type="password" id="password" name="password" class="form-control" placeholder="Enter Password" />
         <label for="confirm_password">Confirm Password</label>
         <input type="password" id="confirm_password" name="confirm_password" class="form-control" placeholder="Confirm Password" />
+        <label for="profile_picture">Profile Picture</label>
+        <input type="file" id="profile_picture" name="profile_picture" class="form-control" accept="image/*" />
         <br />
-        {{form}}
         <div align="center">
             <button class="btn btn-primary" type="submit">Sign Up</button>
         </div>
     </div>
 </form>
-
 {% endblock %}
-
 
 
 === .\applicaton\templates\user_engagement.html ===
