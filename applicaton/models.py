@@ -14,12 +14,13 @@ class User(db.Model, UserMixin):
     username = db.Column(db.String(150), unique=True)
     password = db.Column(db.String(150))
     date_created = db.Column(db.DateTime(timezone=True), default=func.now())
-    profile_picture = db.Column(db.String(150), nullable=True)  # Add this field to store the image filename
+    profile_picture = db.Column(db.String(150), nullable=True)
     posts = db.relationship("Post", backref="user", cascade="all, delete")
     comments = db.relationship("Comment", backref="user", cascade="all, delete")
     likes = db.relationship("Like", backref="user", cascade="all, delete")
     followers = db.relationship("Follower", foreign_keys=[Follower.user_id], backref="followed_user", lazy="dynamic")
     following = db.relationship("Follower", foreign_keys=[Follower.follower_id], backref="follower", lazy="dynamic")
+    notifications = db.relationship("Notification", backref="user", cascade="all, delete", lazy="dynamic")  # Add lazy="dynamic"
 
 class Post(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -41,3 +42,9 @@ class Like(db.Model):
     date_created = db.Column(db.DateTime(timezone=True), default=func.now())
     author = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     post_id = db.Column(db.Integer, db.ForeignKey('post.id'), nullable=False)
+
+class Notification(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    message = db.Column(db.String(200), nullable=False)
+    date_created = db.Column(db.DateTime(timezone=True), default=func.now())

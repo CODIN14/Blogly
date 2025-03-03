@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, request, flash, redirect, url_for
 from flask_login import login_required, current_user
-from .models import Post, User, Comment, Like, Follower
+from .models import Post, User, Comment, Like, Follower, Notification  # Add Notification import
 import requests
 from . import db
 
@@ -14,12 +14,24 @@ def home():
     following_ids = []
     for follower in current_user.following:
         following_ids.append(follower.user_id)
+
     # Get the posts created by users that the current user is following
-    following_posts = Post.query.filter(Post.author.in_(following_ids)).all()
+    if following_ids:
+        following_posts = Post.query.filter(Post.author.in_(following_ids)).all()
+    else:
+        # If the user isn't following anyone, get all posts except their own
+        following_posts = Post.query.filter(Post.author != current_user.id).all()
+
     # Get the current user's posts
     user_posts = current_user.posts
-    # Combine the two lists of posts
-    posts = following_posts + user_posts
+
+    # Combine the two lists and remove duplicates based on post ID
+    posts_dict = {post.id: post for post in following_posts + user_posts}
+    posts = list(posts_dict.values())
+
+    # Sort posts by date_created (most recent first)
+    posts.sort(key=lambda x: x.date_created, reverse=True)
+
     return render_template("home.html", user=current_user, posts=posts)
 
 @login_required
@@ -75,7 +87,7 @@ def post(username):
     # Check if the user exists
     if not user:
         flash("No user with that username exists", category="error")
-        return redirect(url_for('views.home'))  # Fixed: Added 'return' statement to prevent further execution
+        return redirect(url_for('views.home'))
     # Get all posts by the user
     posts = user.posts
 
@@ -107,6 +119,13 @@ def create_comment(post_id):
                 text=text, author=current_user.id, post_id=post_id)
             # Add comment to database session
             db.session.add(comment)
+            # Create a notification for the post author (if not the same as the commenter)
+            if post.author != current_user.id:
+                notification = Notification(
+                    user_id=post.author,
+                    message=f"{current_user.username} commented on your post."
+                )
+                db.session.add(notification)
             # Commit changes to the database
             db.session.commit()
         else:
@@ -156,6 +175,13 @@ def like(post_id):
         # Create a new like
         like = Like(author=current_user.id, post_id=post_id)
         db.session.add(like)
+        # Create a notification for the post author (if not the same as the liker)
+        if post.author != current_user.id:
+            notification = Notification(
+                user_id=post.author,
+                message=f"{current_user.username} liked your post."
+            )
+            db.session.add(notification)
         db.session.commit()
 
     # Redirect to the home page
@@ -192,6 +218,13 @@ def follow_unfollow(username):
             follow = Follower(user_id=user_to_follow.id,
                               follower_id=current_user.id)
             db.session.add(follow)
+            # Create a notification for the user being followed
+            if user_to_follow.id != current_user.id:
+                notification = Notification(
+                    user_id=user_to_follow.id,
+                    message=f"{current_user.username} started following you."
+                )
+                db.session.add(notification)
             db.session.commit()
             flash(
                 f"You are now following {user_to_follow.username}", category="success")
@@ -242,6 +275,14 @@ def edit(id):
             db.session.commit()
             flash("Post updated!", category='success')
             return redirect(url_for('views.home'))
+
+@views.route("/notifications")
+@login_required
+def notifications():
+    # Get the current user's notifications, ordered by most recent
+    notifications = current_user.notifications.order_by(Notification.date_created.desc()).all()
+    return render_template("notifications.html", user=current_user, notifications=notifications)
+
 
 @views.route('/user_engagement/<int:user_id>')
 def user_engagement(user_id):

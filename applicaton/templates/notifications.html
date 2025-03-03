@@ -1,0 +1,19 @@
+{% extends "nav.html" %}
+{% block title %}Notifications{% endblock %}
+{% block content %}
+<div class="container mt-5">
+    <h1>Notifications</h1>
+    {% if notifications %}
+        {% for notification in notifications %}
+            <div class="alert alert-info">
+                {{ notification.message }} <small>({{ notification.date_created }})</small>
+            </div>
+        {% endfor %}
+    {% else %}
+        <p>No notifications yet.</p>
+    {% endif %}
+    <div align="center">
+        <a href="{{ url_for('views.home') }}"><button type="button" class="btn btn-primary btn-lg">Back to Home</button></a>
+    </div>
+</div>
+{% endblock %}

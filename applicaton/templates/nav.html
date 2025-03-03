@@ -22,7 +22,8 @@
         <div class="navbar-nav">
           <a class="nav-item nav-link" href="/home">Home</a>
           {% if user.is_authenticated %}
-            <a class="nav-item nav-link" href="/create-post">Create Post</a> <!-- Moved inside the authenticated block -->
+            <a class="nav-item nav-link" href="/create-post">Create Post</a>
+            <a class="nav-item nav-link" href="/notifications">Notifications</a> <!-- Added Notifications link -->
             <div style="position: absolute; right: 57px;">
               <form action="{{ url_for('views.search') }}" method="POST" class="d-flex" role="search">
                 <input type="search" placeholder="Search..." name="query" class="form-control me-2" id="search-input">
