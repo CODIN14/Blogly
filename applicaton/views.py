@@ -1,6 +1,6 @@
-from flask import Blueprint, render_template, request, flash, redirect, url_for
+from flask import Blueprint, render_template, request, flash, redirect, url_for, jsonify  # We need jsonify to send the list back
 from flask_login import login_required, current_user
-from .models import Post, User, Comment, Like, Follower, Notification  # Add Notification import
+from .models import Post, User, Comment, Like, Follower, Notification
 import requests
 from . import db
 
@@ -248,6 +248,21 @@ def search():
     else:
         # Render the search template when accessed via GET request
         return render_template("search.html", user=current_user)
+
+@views.route("/search-autocomplete", methods=["GET"])
+@login_required
+def search_autocomplete():
+    # Get what the user typed (e.g., "Col")
+    query = request.args.get("query", "").strip()
+    if query:  # If the user typed something
+        # Find usernames that match (case-insensitive, e.g., "col" matches "ColinVIT")
+        users = User.query.filter(User.username.ilike(f"%{query}%")).limit(5).all()
+        # Make a list of matching usernames (e.g., ["ColinVIT"])
+        suggestions = [user.username for user in users]
+        # Send the list back as JSON (a format jQuery UI understands)
+        return jsonify(suggestions)
+    # If the user didn’t type anything, send an empty list
+    return jsonify([])
 
 @views.route("/edit/<id>", methods=['GET', 'POST'])
 @login_required

@@ -56,3 +56,19 @@ body {
   .dark-mode .search-container .Each-user h5 {
     color: #ffffff;
   }
+
+/* Style the autocomplete dropdown */
+.ui-autocomplete {
+  background-color: white;
+  border: 1px solid #ccc;
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 1000; /* Make sure it appears above other elements */
+}
+.ui-autocomplete li {
+  padding: 5px;
+  cursor: pointer;
+}
+.ui-autocomplete li:hover {
+  background-color: #f0f0f0;
+}
