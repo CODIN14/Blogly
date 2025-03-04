@@ -3,6 +3,8 @@ from flask_login import login_required, current_user
 from .models import Post, User, Comment, Like, Follower, Notification,Category
 import requests
 from . import db
+from werkzeug.utils import secure_filename
+import os
 
 views = Blueprint("views", __name__)
 
@@ -260,6 +262,30 @@ def search_autocomplete():
     # If the user didn’t type anything, send an empty list
     return jsonify([])
 
+@views.route("/upload-image", methods=['POST'])
+@login_required
+def upload_image():
+    print("DEBUG: Entering upload-image route")  # Debug log
+    if 'file' not in request.files:
+        print("DEBUG: No file part in request")
+        return jsonify({'error': 'No file part'}), 400
+    file = request.files['file']
+    if file.filename == '':
+        print("DEBUG: No selected file")
+        return jsonify({'error': 'No selected file'}), 400
+    if file:
+        filename = secure_filename(file.filename)
+        uploads_dir = os.path.join('applicaton', 'static', 'uploads')
+        os.makedirs(uploads_dir, exist_ok=True)
+        file_path = os.path.join(uploads_dir, filename)
+        print(f"DEBUG: Saving file to {file_path}")
+        file.save(file_path)
+        image_url = url_for('static', filename='uploads/' + filename)
+        print(f"DEBUG: Returning image URL: {image_url}")
+        return jsonify({'location': image_url})
+    print("DEBUG: File upload failed")
+    return jsonify({'error': 'File upload failed'}), 500
+
 @views.route("/edit/<id>", methods=['GET', 'POST'])
 @login_required
 def edit(id):
@@ -317,3 +343,4 @@ def view_post(id):
         flash("Post does not exist", category="error")
         return redirect(url_for('views.home'))
     return render_template("view_post.html", user=current_user, post=post, User=User)
+

@@ -37,14 +37,14 @@
                 <h4>{{ post.title }}</h4>
                 <p class="card-text">
                     {% if post.text|length > 100 %}
-                        {{ post.text[:100] }}... <a href="{{ url_for('views.view_post', id=post.id) }}">Read More</a>
+                        {{ post.text[:100] | safe }}... <a href="{{ url_for('views.view_post', id=post.id) }}">Read More</a>
                     {% else %}
-                        {{ post.text }} <a href="{{ url_for('views.view_post', id=post.id) }}">Read More</a>
+                        {{ post.text | safe }} <a href="{{ url_for('views.view_post', id=post.id) }}">Read More</a>
                     {% endif %}
                 </p>
                 <div>
                     <a href="{{ url_for('views.like', post_id=post.id) }}">
-                        <i class="fas fa-thumbs-up"></i> {{ post.likes|length }}
+                        <i class="fas fa-thumbs-up"></i> <span class="like-count">{{ post.likes|length }}</span>
                     </a>
                 </div>
             </div>

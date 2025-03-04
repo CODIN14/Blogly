@@ -3,7 +3,7 @@
 {% block content %}
 <div class="container mt-5">
     <h3 align="center">Edit Post</h3>
-    <form method="POST">
+    <form method="POST" enctype="multipart/form-data">
         <div class="form-group">
             <label for="title">Post Title</label>
             <input type="text" name="title" id="title" class="form-control" value="{{ post.title }}" required />
@@ -19,4 +19,47 @@
         <a href="{{ url_for('views.home') }}"><button type="button" class="btn btn-secondary">Back to Home</button></a>
     </div>
 </div>
+<!-- Load TinyMCE from Local Static Files -->
+<script src="{{ url_for('static', filename='tinymce/tinymce.min.js') }}"></script>
+<script>
+    tinymce.init({
+        selector: '#text',
+        plugins: 'image link media table code',
+        toolbar: 'undo redo | bold italic | alignleft aligncenter alignright | image link media | table | code',
+        images_upload_url: "{{ url_for('views.upload_image') }}",
+        images_upload_handler: function (blobInfo, success, failure) {
+            console.log('DEBUG: Starting image upload');
+            var xhr = new XMLHttpRequest();
+            xhr.open('POST', "{{ url_for('views.upload_image') }}", true);
+
+            xhr.onload = function () {
+                console.log('DEBUG: XHR onload, status:', xhr.status);
+                if (xhr.status === 200) {
+                    try {
+                        var json = JSON.parse(xhr.responseText);
+                        console.log('DEBUG: XHR response:', json);
+                        if (json.location) {
+                            success(json.location);
+                        } else {
+                            failure('Invalid response: missing location field');
+                        }
+                    } catch (e) {
+                        failure('Failed to parse response: ' + e.message);
+                    }
+                } else {
+                    failure('Image upload failed: HTTP Status ' + xhr.status);
+                }
+            };
+
+            xhr.onerror = function () {
+                console.error('DEBUG: XHR error');
+                failure('Image upload failed due to a network error');
+            };
+
+            var formData = new FormData();
+            formData.append('file', blobInfo.blob(), blobInfo.filename());
+            xhr.send(formData);
+        }
+    });
+</script>
 {% endblock %}

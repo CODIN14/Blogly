@@ -19,7 +19,7 @@
                 <small class="text-muted">{{ post.date_created }}</small>
             </h5>
             <h4>{{ post.title }}</h4>
-            <p class="card-text">{{ post.text }}</p>
+            <p class="card-text">{{ post.text | safe }}</p>
             <div>
                 <a href="{{ url_for('views.like', post_id=post.id) }}">
                     <i class="fas fa-thumbs-up"></i> {{ post.likes|length }}
