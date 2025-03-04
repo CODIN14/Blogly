@@ -21,8 +21,8 @@
             <h4>{{ post.title }}</h4>
             <p class="card-text">{{ post.text | safe }}</p>
             <div>
-                <a href="{{ url_for('views.like', post_id=post.id) }}">
-                    <i class="fas fa-thumbs-up"></i> {{ post.likes|length }}
+                <a href="#" class="like-btn" data-post-id="{{ post.id }}">
+                    <i class="fas fa-thumbs-up"></i> <span class="like-count">{{ post.likes|length }}</span>
                 </a>
                 {% if current_user.id == post.author %}
                     <a href="{{ url_for('views.delete_post', id=post.id) }}" class="text-danger ml-3">
@@ -34,19 +34,21 @@
                 {% endif %}
             </div>
             <h6 class="mt-3">Comments:</h6>
-            {% for comment in post.comments %}
-                <p>
-                    <strong>{{ comment.user.username }}</strong> ({{ comment.date_created }}): {{ comment.text }}
-                    {% if current_user.id == comment.author or current_user.id == post.author %}
-                        <a href="{{ url_for('views.delete_comment', comment_id=comment.id) }}" class="text-danger ml-2">
-                            <i class="fas fa-trash-alt"></i>
-                        </a>
-                    {% endif %}
-                </p>
-            {% endfor %}
-            <form method="POST" action="{{ url_for('views.create_comment', post_id=post.id) }}">
+            <div id="comments">
+                {% for comment in post.comments %}
+                    <p id="comment-{{ comment.id }}">
+                        <strong>{{ comment.user.username }}</strong> ({{ comment.date_created }}): {{ comment.text }}
+                        {% if current_user.id == comment.author or current_user.id == post.author %}
+                            <a href="#" class="delete-comment text-danger ml-2" data-comment-id="{{ comment.id }}">
+                                <i class="fas fa-trash-alt"></i>
+                            </a>
+                        {% endif %}
+                    </p>
+                {% endfor %}
+            </div>
+            <form id="comment-form" method="POST">
                 <div class="form-group">
-                    <input type="text" name="text" class="form-control" placeholder="Add a comment...">
+                    <input type="text" name="text" id="comment-text" class="form-control" placeholder="Add a comment...">
                     <button type="submit" class="btn btn-primary mt-2">Comment</button>
                 </div>
             </form>
@@ -56,4 +58,85 @@
         <a href="{{ url_for('views.home') }}"><button type="button" class="btn btn-secondary">Back to Home</button></a>
     </div>
 </div>
+<!-- Add JavaScript for AJAX Likes and Comments -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Handle Likes
+        document.querySelectorAll('.like-btn').forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+                const postId = this.getAttribute('data-post-id');
+                fetch(`/like-post/${postId}`, {
+                    method: 'GET',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        alert(data.error);
+                        return;
+                    }
+                    const likeCount = this.querySelector('.like-count');
+                    likeCount.textContent = data.likes;
+                    this.classList.toggle('liked', data.liked);
+                })
+                .catch(error => console.error('Error:', error));
+            });
+        });
+
+        // Handle Comment Submission
+        document.getElementById('comment-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            fetch(`/create-comment/{{ post.id }}`, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert(data.error);
+                    return;
+                }
+                const commentsDiv = document.getElementById('comments');
+                const commentDiv = document.createElement('p');
+                commentDiv.id = `comment-${data.comment.id}`;
+                commentDiv.innerHTML = `<strong>${data.comment.username}</strong> (${data.comment.date}): ${data.comment.text}` +
+                    (data.comment.can_delete ? ` <a href="#" class="delete-comment text-danger ml-2" data-comment-id="${data.comment.id}"><i class="fas fa-trash-alt"></i></a>` : '');
+                commentsDiv.appendChild(commentDiv);
+                document.getElementById('comment-text').value = '';
+            })
+            .catch(error => console.error('Error:', error));
+        });
+
+        // Handle Comment Deletion
+        document.addEventListener('click', function(e) {
+            if (e.target.closest('.delete-comment')) {
+                e.preventDefault();
+                const link = e.target.closest('.delete-comment');
+                const commentId = link.getAttribute('data-comment-id');
+                fetch(`/delete-comment/${commentId}`, {
+                    method: 'GET',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        alert(data.error);
+                        return;
+                    }
+                    document.getElementById(`comment-${commentId}`).remove();
+                })
+                .catch(error => console.error('Error:', error));
+            }
+        });
+    });
+</script>
 {% endblock %}

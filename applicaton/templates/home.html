@@ -43,7 +43,7 @@
                     {% endif %}
                 </p>
                 <div>
-                    <a href="{{ url_for('views.like', post_id=post.id) }}">
+                    <a href="#" class="like-btn" data-post-id="{{ post.id }}">
                         <i class="fas fa-thumbs-up"></i> <span class="like-count">{{ post.likes|length }}</span>
                     </a>
                 </div>
@@ -51,4 +51,32 @@
         </div>
     {% endfor %}
 </div>
+<!-- Add JavaScript for AJAX Likes -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.like-btn').forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+                const postId = this.getAttribute('data-post-id');
+                fetch(`/like-post/${postId}`, {
+                    method: 'GET',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        alert(data.error);
+                        return;
+                    }
+                    const likeCount = this.querySelector('.like-count');
+                    likeCount.textContent = data.likes;
+                    this.classList.toggle('liked', data.liked);
+                })
+                .catch(error => console.error('Error:', error));
+            });
+        });
+    });
+</script>
 {% endblock %}

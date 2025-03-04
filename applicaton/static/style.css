@@ -86,3 +86,28 @@ body {
   border-radius: 50%; /* Make it circular */
   object-fit: cover; /* Ensure the image fits nicely */
 }
+
+/* Style for the like button (default/unliked state) */
+.like-btn {
+  color: #666; /* Gray color for unliked state */
+  text-decoration: none; /* Remove underline from link */
+  transition: color 0.3s ease; /* Smooth color transition */
+}
+
+.like-btn:hover {
+  color: #007bff; /* Blue color on hover (Bootstrap primary color) */
+}
+
+.like-btn i {
+  margin-right: 5px; /* Space between icon and count */
+}
+
+/* Style for the liked state */
+.like-btn.liked {
+  color: #007bff; /* Blue color for liked state */
+  font-weight: bold; /* Make the text bolder when liked */
+}
+
+.like-btn.liked i {
+  color: #007bff; /* Ensure the icon is also blue when liked */
+}

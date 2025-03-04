@@ -101,79 +101,78 @@ def post(username):
 @views.route("/create-comment/<post_id>", methods=["POST"])
 @login_required
 def create_comment(post_id):
-    # Get text from request form
     text = request.form.get('text')
-
-    # Check if text is empty
     if not text:
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({'error': 'Comment cannot be empty'}), 400
         flash("Comment can not be empty", category="error")
     else:
-        # Get the post with the specified id
         post = Post.query.filter_by(id=post_id).first()
-        # Check if post exists
         if post:
-            # Create new comment object with text, current user's ID, and post_id
             comment = Comment(
                 text=text, author=current_user.id, post_id=post_id)
-            # Add comment to database session
             db.session.add(comment)
-            # Create a notification for the post author (if not the same as the commenter)
             if post.author != current_user.id:
                 notification = Notification(
                     user_id=post.author,
                     message=f"{current_user.username} commented on your post."
                 )
                 db.session.add(notification)
-            # Commit changes to the database
             db.session.commit()
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return jsonify({
+                    'comment': {
+                        'id': comment.id,
+                        'text': comment.text,
+                        'username': comment.user.username,
+                        'date': comment.date_created.strftime('%Y-%m-%d %H:%M:%S'),
+                        'can_delete': current_user.id == comment.author or current_user.id == post.author
+                    }
+                })
         else:
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return jsonify({'error': 'Post does not exist'}), 404
             flash("Post does not exist", category="error")
-
-    # Redirect to home page
     return redirect(url_for('views.home'))
 
 @views.route("/delete-comment/<comment_id>")
 @login_required
 def delete_comment(comment_id):
-    # Get the comment with the specified id
     comment = Comment.query.filter_by(id=comment_id).first()
-
-    # Check if the comment exists
     if not comment:
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({'error': 'Comment does not exist'}), 404
         flash('Comment does not exist.', category='error')
-    # Check if the current user is the author of the comment or the post
     elif current_user.id != comment.author and current_user.id != comment.post.author:
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({'error': 'You do not have permission to delete this comment'}), 403
         flash('You do not have permission to delete this comment.', category='error')
     else:
-        # Delete the comment from the database
         db.session.delete(comment)
-        # Commit changes to the database
         db.session.commit()
-
-    # Redirect to the home page
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({'success': true})
     return redirect(url_for('views.home'))
 
 @views.route("/like-post/<post_id>", methods=["GET"])
 @login_required
 def like(post_id):
-    # Get the post with the specified id
     post = Post.query.filter_by(id=post_id).first()
-    # Get the like by the current user on the post
     like = Like.query.filter_by(
         author=current_user.id, post_id=post_id).first()
-    # Check if the post exists
     if not post:
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({'error': 'Post does not exist'}), 404
         flash('Post does not exist', category='error')
-    # Check if the current user has already liked the post
+        return redirect(url_for('views.home'))
     elif like:
-        # Unlike the post
         db.session.delete(like)
         db.session.commit()
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({'liked': False, 'likes': len(post.likes)})
     else:
-        # Create a new like
         like = Like(author=current_user.id, post_id=post_id)
         db.session.add(like)
-        # Create a notification for the post author (if not the same as the liker)
         if post.author != current_user.id:
             notification = Notification(
                 user_id=post.author,
@@ -181,9 +180,10 @@ def like(post_id):
             )
             db.session.add(notification)
         db.session.commit()
-
-    # Redirect to the home page
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({'liked': True, 'likes': len(post.likes)})
     return redirect(url_for('views.home'))
+
 
 @views.route("/follow_unfollow/<username>", methods=["POST"])
 @login_required
