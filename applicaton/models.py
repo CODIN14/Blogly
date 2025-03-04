@@ -29,10 +29,11 @@ class Category(db.Model):
 
 class Post(db.Model):
     id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(150), nullable=False)  # Add title field
     text = db.Column(db.Text, nullable=False)
     date_created = db.Column(db.DateTime(timezone=True), default=func.now())
     author = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    category_id = db.Column(db.Integer, db.ForeignKey('category.id'), nullable=True)  # Add category_id
+    category_id = db.Column(db.Integer, db.ForeignKey('category.id'), nullable=True)
     comments = db.relationship("Comment", backref="post", cascade="all, delete")
     likes = db.relationship("Like", backref="post", cascade="all, delete")
 

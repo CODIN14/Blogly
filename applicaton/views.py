@@ -38,19 +38,22 @@ def home():
 @views.route("/create-post", methods=['GET', 'POST'])
 def create_post():
     if request.method == "POST":
+        title = request.form.get('title')  # Get title
         text = request.form.get('text')
-        category_id = request.form.get('category_id')  # Get selected category
-        if not text:
-            flash("Post cannot be empty", category="error")
+        category_id = request.form.get('category_id')
+        if not title:
+            flash("Post title cannot be empty", category="error")
+        elif not text:
+            flash("Post content cannot be empty", category="error")
         else:
-            post = Post(text=text, author=current_user.id)
+            post = Post(title=title, text=text, author=current_user.id)  # Include title
             if category_id:
-                post.category_id = int(category_id)  # Assign category if selected
+                post.category_id = int(category_id)
             db.session.add(post)
             db.session.commit()
             flash("Post created!", category='success')
             return redirect(url_for('views.home'))
-    categories = Category.query.all()  # Pass categories to the template
+    categories = Category.query.all()
     return render_template("create_post.html", user=current_user, User=User, categories=categories)
 
 @views.route("/delete-post/<id>")
@@ -260,25 +263,22 @@ def search_autocomplete():
 @views.route("/edit/<id>", methods=['GET', 'POST'])
 @login_required
 def edit(id):
-    # Get the post with the given ID
     post = Post.query.get(id)
-
-    # Check if the post exists and if the current user is the author
     if not post or current_user.id != post.author:
         flash("Post does not exist or you do not have permission to edit it",
               category="error")
         return redirect(url_for('views.home'))
-
-    # If the request method is GET, render the edit form
     if request.method == "GET":
         return render_template("edit.html", user=current_user, post=post)
-
-    # If the request method is POST, update the post with the new data
     if request.method == "POST":
+        title = request.form.get('title')  # Get title
         text = request.form.get('text')
-        if not text:
-            flash("Post cannot be empty", category="error")
+        if not title:
+            flash("Post title cannot be empty", category="error")
+        elif not text:
+            flash("Post content cannot be empty", category="error")
         else:
+            post.title = title  # Update title
             post.text = text
             db.session.commit()
             flash("Post updated!", category='success')
@@ -308,3 +308,12 @@ def user_engagement(user_id):
     nested_dict = user_engagement['user_engagement']
     # Render the user engagement template and pass the data to it
     return render_template('user_engagement.html', user_engagement=nested_dict, user=current_user)
+
+@views.route("/post/<id>")
+@login_required
+def view_post(id):
+    post = Post.query.get(id)
+    if not post:
+        flash("Post does not exist", category="error")
+        return redirect(url_for('views.home'))
+    return render_template("view_post.html", user=current_user, post=post, User=User)
