@@ -37,28 +37,21 @@ def home():
 @login_required
 @views.route("/create-post", methods=['GET', 'POST'])
 def create_post():
-    # Check if request method is POST
     if request.method == "POST":
-        # Get text from request form
         text = request.form.get('text')
-
-        # Check if text is empty
+        category_id = request.form.get('category_id')  # Get selected category
         if not text:
             flash("Post cannot be empty", category="error")
         else:
-            # Create new post object with text and current user's ID
             post = Post(text=text, author=current_user.id)
-            # Add post to database session
+            if category_id:
+                post.category_id = int(category_id)  # Assign category if selected
             db.session.add(post)
-            # Commit changes to the database
             db.session.commit()
-            # Flash success message
             flash("Post created!", category='success')
-            # Redirect to home page
             return redirect(url_for('views.home'))
-
-    # Render the create_post template
-    return render_template("create_post.html", user=current_user, User=User)
+    categories = Category.query.all()  # Pass categories to the template
+    return render_template("create_post.html", user=current_user, User=User, categories=categories)
 
 @views.route("/delete-post/<id>")
 @login_required

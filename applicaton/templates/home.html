@@ -1,1 +1,72 @@
-{% extends "posts_div.html" %} {% block title %}Home{% endblock %} 
+{% extends "nav.html" %}
+{% block title %}Home{% endblock %}
+{% block content %}
+<div class="container mt-5">
+    <h1 align="center">Recent Posts</h1>
+    <!-- Category Filter -->
+    <form method="GET" action="{{ url_for('views.home') }}">
+        <div class="form-group">
+            <label for="category_id">Filter by Category</label>
+            <select name="category_id" id="category_id" class="form-control" onchange="this.form.submit()">
+                <option value="">All Categories</option>
+                {% for category in categories %}
+                    <option value="{{ category.id }}" {% if request.args.get('category_id')|string == category.id|string %}selected{% endif %}>{{ category.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </form>
+    <br />
+    <!-- Posts -->
+    {% for post in posts %}
+        <div class="card mb-3">
+            <div class="profile-pic-container mr-3">
+                {% if post.user.profile_picture %}
+                    <img src="{{ url_for('static', filename='uploads/' + post.user.profile_picture) }}" alt="Profile Picture" class="profile-pic">
+                {% else %}
+                    <i class="fas fa-user-circle fa-2x"></i>
+                {% endif %}
+            </div>
+            <div class="card-body">
+                <h5 class="card-title">
+                    <a href="{{ url_for('views.post', username=post.user.username) }}">{{ post.user.username }}</a> 
+                    {% if post.category %}
+                        <span class="badge bg-primary">{{ post.category.name }}</span>
+                    {% endif %}
+                    <small class="text-muted">{{ post.date_created }}</small>
+                </h5>
+                <p class="card-text">{{ post.text }}</p>
+                <div>
+                    <a href="{{ url_for('views.like', post_id=post.id) }}">
+                        <i class="fas fa-thumbs-up"></i> {{ post.likes|length }}
+                    </a>
+                    {% if current_user.id == post.author %}
+                        <a href="{{ url_for('views.delete_post', id=post.id) }}" class="text-danger ml-3">
+                            <i class="fas fa-trash-alt"></i>
+                        </a>
+                        <a href="{{ url_for('views.edit', id=post.id) }}" class="text-primary ml-3">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                    {% endif %}
+                </div>
+                <h6 class="mt-3">Comments:</h6>
+                {% for comment in post.comments %}
+                    <p>
+                        <strong>{{ comment.user.username }}</strong> ({{ comment.date_created }}): {{ comment.text }}
+                        {% if current_user.id == comment.author or current_user.id == post.author %}
+                            <a href="{{ url_for('views.delete_comment', comment_id=comment.id) }}" class="text-danger ml-2">
+                                <i class="fas fa-trash-alt"></i>
+                            </a>
+                        {% endif %}
+                    </p>
+                {% endfor %}
+                <form method="POST" action="{{ url_for('views.create_comment', post_id=post.id) }}">
+                    <div class="form-group">
+                        <input type="text" name="text" class="form-control" placeholder="Add a comment...">
+                        <button type="submit" class="btn btn-primary mt-2">Comment</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    {% endfor %}
+</div>
+{% endblock %}

@@ -20,13 +20,19 @@ class User(db.Model, UserMixin):
     likes = db.relationship("Like", backref="user", cascade="all, delete")
     followers = db.relationship("Follower", foreign_keys=[Follower.user_id], backref="followed_user", lazy="dynamic")
     following = db.relationship("Follower", foreign_keys=[Follower.follower_id], backref="follower", lazy="dynamic")
-    notifications = db.relationship("Notification", backref="user", cascade="all, delete", lazy="dynamic")  # Add lazy="dynamic"
+    notifications = db.relationship("Notification", backref="user", cascade="all, delete", lazy="dynamic")
+
+class Category(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(50), unique=True, nullable=False)
+    posts = db.relationship("Post", backref="category", cascade="all, delete")
 
 class Post(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     text = db.Column(db.Text, nullable=False)
     date_created = db.Column(db.DateTime(timezone=True), default=func.now())
     author = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    category_id = db.Column(db.Integer, db.ForeignKey('category.id'), nullable=True)  # Add category_id
     comments = db.relationship("Comment", backref="post", cascade="all, delete")
     likes = db.relationship("Like", backref="post", cascade="all, delete")
 
