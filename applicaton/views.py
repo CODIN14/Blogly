@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, request, flash, redirect, url_for, jsonify  # We need jsonify to send the list back
 from flask_login import login_required, current_user
-from .models import Post, User, Comment, Like, Follower, Notification
+from .models import Post, User, Comment, Like, Follower, Notification,Category
 import requests
 from . import db
 

@@ -72,3 +72,17 @@ body {
 .ui-autocomplete li:hover {
   background-color: #f0f0f0;
 }
+
+/* Style for profile pictures on posts */
+.profile-pic-container {
+  display: inline-block;
+  vertical-align: middle;
+  margin-right: 10px;
+}
+
+.profile-pic {
+  width: 40px;  /* Smaller width */
+  height: 40px; /* Smaller height */
+  border-radius: 50%; /* Make it circular */
+  object-fit: cover; /* Ensure the image fits nicely */
+}
