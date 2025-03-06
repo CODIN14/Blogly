@@ -72,19 +72,7 @@ This document outlines the design aspects of the BLOGLITE app, including feature
 
 ## Monitoring with Grafana
 
-### Overview
-- **Purpose**: Use Grafana and Prometheus to monitor app metrics like HTTP requests and post shares.
-- **Setup**:
-  - Prometheus scrapes metrics from `/metrics` endpoint.
-  - Grafana visualizes metrics in a dashboard.
-- **Dashboard**:
-  - "BLOGLITE Monitoring" dashboard includes:
-    - Time series graph for total HTTP requests (`flask_http_request_total`).
-    - Time series graph for average request duration (`flask_http_request_duration_seconds_sum / flask_http_request_duration_seconds_count`).
-    - Stat panel for total post shares (`bloglite_post_shares_total`).
-
-### Design Description
-- **Dashboard**: The "BLOGLITE Monitoring" dashboard includes panels for request counts, durations, and share counts, visualized as graphs and stats.
-
-## Notes
-- The design focuses on usability, with a clean Bootstrap-based UI, dynamic interactions (via AJAX), and visual feedback for actions like liking and sharing.
+### Monitoring with Grafana
+- **Setup**: Grafana is configured with a Prometheus data source to monitor BLOGLITE app metrics.
+- **Dashboard**: Created a "BLOGLITE Monitoring" dashboard with panels for HTTP Requests Total, HTTP Request Duration, and Post Shares Total.
+- **Location**: Accessible at http://localhost:3000 (local setup).

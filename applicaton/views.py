@@ -5,7 +5,14 @@ from .models import Post, User, Comment, Like, Follower, Notification,Category
 import requests
 from . import db
 from werkzeug.utils import secure_filename
+from prometheus_client import Counter
 import os
+
+
+
+
+# Import the registry from __init__.py
+from . import registry
 
 views = Blueprint("views", __name__)
 
@@ -311,6 +318,11 @@ def edit(id):
             flash("Post updated!", category='success')
             return redirect(url_for('views.home'))
 
+from prometheus_client import Counter
+
+POST_SHARES_TOTAL = Counter('bloglite_post_shares_total', 'Total number of post shares', registry=registry)
+
+
 @views.route("/share-post/<post_id>", methods=['POST'])
 @login_required
 def share_post(post_id):
@@ -329,7 +341,9 @@ def share_post(post_id):
     if recipient.id == current_user.id:
         return jsonify({'error': 'You cannot share with yourself'}), 400
 
-    # Create a notification for the recipient
+    # Increment the counter
+    POST_SHARES_TOTAL.inc()
+
     notification = Notification(
         user_id=recipient.id,
         message=f"{current_user.username} shared a post with you: <a href='{url_for('views.view_post', id=post.id)}'>{post.title}</a>"
@@ -337,7 +351,7 @@ def share_post(post_id):
     db.session.add(notification)
     db.session.commit()
 
-    return jsonify({'success': true})
+    return jsonify({'success': True})
 
 @views.route("/notifications")
 @login_required
