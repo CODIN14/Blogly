@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template, request, flash, redirect, url_for, jsonify  # We need jsonify to send the list back
 from flask_login import login_required, current_user
+from sqlalchemy import true
 from .models import Post, User, Comment, Like, Follower, Notification,Category
 import requests
 from . import db
@@ -309,6 +310,34 @@ def edit(id):
             db.session.commit()
             flash("Post updated!", category='success')
             return redirect(url_for('views.home'))
+
+@views.route("/share-post/<post_id>", methods=['POST'])
+@login_required
+def share_post(post_id):
+    post = Post.query.get(post_id)
+    if not post:
+        return jsonify({'error': 'Post does not exist'}), 404
+
+    data = request.get_json()
+    username = data.get('username')
+    if not username:
+        return jsonify({'error': 'Username is required'}), 400
+
+    recipient = User.query.filter_by(username=username).first()
+    if not recipient:
+        return jsonify({'error': 'User does not exist'}), 404
+    if recipient.id == current_user.id:
+        return jsonify({'error': 'You cannot share with yourself'}), 400
+
+    # Create a notification for the recipient
+    notification = Notification(
+        user_id=recipient.id,
+        message=f"{current_user.username} shared a post with you: <a href='{url_for('views.view_post', id=post.id)}'>{post.title}</a>"
+    )
+    db.session.add(notification)
+    db.session.commit()
+
+    return jsonify({'success': true})
 
 @views.route("/notifications")
 @login_required

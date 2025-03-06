@@ -2,21 +2,18 @@
 {% block title %}Notifications{% endblock %}
 {% block content %}
 <div class="container mt-5">
-    <h1>Notifications</h1>
+    <h1 align="center">Notifications</h1>
     {% if notifications %}
-        <form action="{{ url_for('views.clear_notifications') }}" method="POST">
-            <button type="submit" class="btn btn-danger mb-3">Clear Notifications</button>
+        <form method="POST" action="{{ url_for('views.clear_notifications') }}">
+            <button type="submit" class="btn btn-danger mb-3">Clear All Notifications</button>
         </form>
         {% for notification in notifications %}
             <div class="alert alert-info">
-                {{ notification.message }} <small>({{ notification.date_created }})</small>
+                <p>{{ notification.message | safe }} <small>({{ notification.date_created }})</small></p>
             </div>
         {% endfor %}
     {% else %}
         <p>No notifications yet.</p>
     {% endif %}
-    <div align="center">
-        <a href="{{ url_for('views.home') }}"><button type="button" class="btn btn-primary btn-lg">Back to Home</button></a>
-    </div>
 </div>
 {% endblock %}

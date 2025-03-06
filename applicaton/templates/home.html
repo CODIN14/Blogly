@@ -46,14 +46,48 @@
                     <a href="#" class="like-btn" data-post-id="{{ post.id }}">
                         <i class="fas fa-thumbs-up"></i> <span class="like-count">{{ post.likes|length }}</span>
                     </a>
+                    <a href="#" class="share-btn ml-3" data-post-id="{{ post.id }}" data-bs-toggle="modal" data-bs-target="#shareModal">
+                        <i class="fas fa-share"></i> Share
+                    </a>
                 </div>
             </div>
         </div>
     {% endfor %}
 </div>
-<!-- Add JavaScript for AJAX Likes -->
+
+<!-- Share Modal -->
+<div class="modal fade" id="shareModal" tabindex="-1" aria-labelledby="shareModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="shareModalLabel">Share Post</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="shareLink" class="form-label">Shareable Link</label>
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="shareLink" readonly>
+                        <button class="btn btn-primary" type="button" id="copyLinkBtn">Copy</button>
+                    </div>
+                </div>
+                <div>
+                    <label for="shareUser" class="form-label">Share with a User</label>
+                    <input type="text" class="form-control" id="shareUser" placeholder="Enter username">
+                    <button class="btn btn-primary mt-2" type="button" id="shareUserBtn">Share</button>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript for Likes and Sharing -->
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+        // Handle Likes
         document.querySelectorAll('.like-btn').forEach(button => {
             button.addEventListener('click', function(e) {
                 e.preventDefault();
@@ -76,6 +110,70 @@
                 })
                 .catch(error => console.error('Error:', error));
             });
+        });
+
+        // Handle Share Button Click
+        document.querySelectorAll('.share-btn').forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+                const postId = this.getAttribute('data-post-id');
+                const shareLink = `${window.location.origin}/post/${postId}`;
+                document.getElementById('shareLink').value = shareLink;
+                document.getElementById('shareUserBtn').setAttribute('data-post-id', postId);
+            });
+        });
+
+        // Handle Copy Link
+        document.getElementById('copyLinkBtn').addEventListener('click', function() {
+            const shareLinkInput = document.getElementById('shareLink');
+            shareLinkInput.select();
+            document.execCommand('copy');
+            alert('Link copied to clipboard!');
+        });
+
+        // Autocomplete for Share User
+        $(function() {
+            $("#shareUser").autocomplete({
+                source: function(request, response) {
+                    fetch(`/search-autocomplete?query=${request.term}`, {
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    })
+                    .then(res => res.json())
+                    .then(data => response(data));
+                },
+                minLength: 2
+            });
+        });
+
+        // Handle Share with User
+        document.getElementById('shareUserBtn').addEventListener('click', function() {
+            const username = document.getElementById('shareUser').value;
+            const postId = this.getAttribute('data-post-id');
+            if (!username) {
+                alert('Please enter a username to share with.');
+                return;
+            }
+            fetch(`/share-post/${postId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({ username: username })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert(data.error);
+                } else {
+                    alert('Post shared successfully!');
+                    document.getElementById('shareUser').value = ''; // Clear input
+                    $('#shareModal').modal('hide'); // Close modal
+                }
+            })
+            .catch(error => console.error('Error:', error));
         });
     });
 </script>

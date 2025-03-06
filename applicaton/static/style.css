@@ -111,3 +111,18 @@ body {
 .like-btn.liked i {
   color: #007bff; /* Ensure the icon is also blue when liked */
 }
+
+/* Style for the share button */
+.share-btn {
+  color: #666;
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+.share-btn:hover {
+  color: #28a745; /* Green color on hover (Bootstrap success color) */
+}
+
+.share-btn i {
+  margin-right: 5px;
+}

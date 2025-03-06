@@ -33,11 +33,11 @@
         selector: '#text',
         plugins: 'image link media table code',
         toolbar: 'undo redo | bold italic | alignleft aligncenter alignright | image link media | table | code',
-        images_upload_url: '{{ url_for('views.upload_image') }}',
+        images_upload_url: "{{ url_for('views.upload_image') }}",
         images_upload_handler: function (blobInfo, success, failure) {
             console.log('DEBUG: Starting image upload');  // Debug log
             var xhr = new XMLHttpRequest();
-            xhr.open('POST', '{{ url_for('views.upload_image') }}', true);
+            xhr.open('POST', "{{ url_for('views.upload_image') }}", true);
 
             xhr.onload = function () {
                 console.log('DEBUG: XHR onload, status:', xhr.status);  // Debug log
