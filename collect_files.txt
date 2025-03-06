@@ -1,0 +1,2314 @@
+
+=== .\Api_doc.yml ===
+openapi: 3.0.0
+info:
+  title: User Engagement API
+  version: 1.0.0
+  description: API for retrieving user engagement data in a blog or social media application.
+servers:
+  - url: http://localhost:5000
+paths:
+  /user_engagement/{user_id}:
+    get:
+      summary: Retrieve user engagement data
+      description: Retrieves user engagement data for the user with the specified ID.
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          description: The ID of the user.
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: User engagement data retrieved successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user_engagement:
+                    type: object
+                    properties:
+                      user_id:
+                        type: integer
+                      total_posts:
+                        type: integer
+                      total_comments:
+                        type: integer
+                      total_likes:
+                        type: integer
+                      total_followers:
+                        type: integer
+                      total_following:
+                        type: integer
+        '404':
+          description: User not found.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+
+
+=== .\app.py ===
+from applicaton import create_app
+
+if __name__=="__main__":
+    app = create_app()
+    app.run(debug=True)
+
+
+=== .\check_users.py ===
+from applicaton import create_app, db
+from applicaton.models import User
+
+app = create_app()
+with app.app_context():
+    users = User.query.all()
+    if users:
+        print("Users still exist:")
+        for user in users:
+            print(f"ID: {user.id}, Email: {user.email}, Username: {user.username}")
+    else:
+        print("No users found in the database.")
+
+
+=== .\collect_files.py ===
+import os
+
+# Define the project directory
+project_dir = "."
+output_file = "collect_files.txt"
+
+# Files and directories to include (explicitly allow these)
+include_dirs = ["applicaton", "templates", ".github", ""]
+include_extensions = [".py", ".html", ".yml", ".md", ".txt"]
+
+# Files and directories to ignore
+ignore_dirs = [".git", "myenv", "__pycache__", "data", "static/uploads"]
+ignore_files = ["database.db", "queries.active", "*.log"]
+
+# Open a file to write the contents
+with open(output_file, "w", encoding="utf-8") as outfile:
+    # Walk through the directory
+    for root, dirs, files in os.walk(project_dir):
+        # Filter directories to only include relevant ones
+        dirs[:] = [d for d in dirs if any(d in include_dirs for d in [d, os.path.basename(root)])]
+
+        for file in files:
+            # Skip ignored files and extensions
+            if any(file in ignore_files or file.endswith(ext) for ext in [".db", ".pyc", ".log"]) or not any(file.endswith(ext) for ext in include_extensions):
+                continue
+
+            file_path = os.path.join(root, file)
+            # Skip files in ignored directories even if extension matches
+            if any(ignored in file_path for ignored in ignore_dirs):
+                continue
+
+            try:
+                outfile.write(f"\n=== {file_path} ===\n")
+                with open(file_path, "r", encoding="utf-8") as f:
+                    outfile.write(f.read())
+                outfile.write("\n\n")
+            except Exception as e:
+                outfile.write(f"Error reading {file_path}: {str(e)}\n\n")
+
+print(f"All relevant file contents written to {output_file}")
+
+
+=== .\collect_files.txt ===
+
+
+
+=== .\design.md ===
+# BLOGLITE Design Documentation
+
+This document outlines the design aspects of the BLOGLITE app, including feature descriptions and monitoring setup.
+
+## Initial App Setup (User Authentication, Posts, Categories)
+
+### Overview
+- **Purpose**: The initial setup includes user authentication (signup, login, logout), post creation, and category filtering on the Home page.
+- **Pages**:
+  - **Home Page (`/home`)**: Displays recent posts with snippets, category filter, and navigation bar.
+  - **Signup Page (`/sign-up`)**: Form for creating a new account with email confirmation.
+  - **Login Page (`/login`)**: Form for logging in.
+  - **Create Post Page (`/create-post`)**: Form for creating a new post with title, content, and category selection.
+
+### Design Description
+- **Home Page**: Features a navigation bar with links to Home, Create Post, Notifications, Profile, and Logout. Includes a category filter dropdown above a list of post snippets, each showing the username, title, truncated content, and a "Read More" link.
+- **Signup Page**: Displays a form with fields for email, username, password, and confirm password, with a "Sign Up" button.
+- **Login Page**: Displays a form with fields for email and password, with a "Login" button.
+- **Create Post Page**: Displays a form with fields for title, content (textarea), and category (dropdown), with a "Submit Post" button.
+
+## Profile Pictures
+
+### Overview
+- **Purpose**: Users can upload a profile picture during signup or update it later, which is displayed next to their posts and on their profile page.
+- **Pages**:
+  - **Home Page (`/home`)**: Profile picture (or default icon) displayed next to each post snippet.
+  - **Full Post View (`/post/<id>`)**: Profile picture displayed next to the post.
+  - **User Profile Page (`/posts/<username>`)**: Profile picture displayed at the top of the user’s profile.
+
+### Design Description
+- **Profile Picture Display**: On the Home page, full post view, and user profile page, a circular profile picture (or default user icon if none uploaded) is displayed to the left of the username and post content.
+
+## Rich Text Editor with TinyMCE
+
+### Overview
+- **Purpose**: Integrated TinyMCE as a rich text editor for creating and editing posts, allowing users to format text, insert images, links, tables, and more.
+- **Pages**:
+  - **Create Post Page (`/create-post`)**: Replaced the plain textarea with TinyMCE editor.
+  - **Edit Post Page (`/edit/<id>`)**: Replaced the plain textarea with TinyMCE editor.
+
+### Design Description
+- **Create/Edit Post Page**: The form includes a title input, a TinyMCE editor (with toolbar for formatting, image insertion, etc.), a category dropdown, and a "Submit Post" or "Update Post" button.
+
+## AJAX Likes and Comments
+
+### Overview
+- **Purpose**: Prevent page reloads when liking or commenting on posts using AJAX, with visual feedback for like/unlike states.
+- **Pages**:
+  - **Home Page (`/home`)**: Like button updates count dynamically; comments are not directly added here but are visible in snippets.
+  - **Full Post View (`/post/<id>`)**: Like button updates count dynamically; comment form adds comments without reload.
+  - **User Profile Page (`/posts/<username>`)**: Same functionality as the full post view.
+- **Styling**:
+  - Like button turns blue and bold when liked, with a light background highlight; reverts to gray when unliked.
+
+### Design Description
+- **Home Page and Full Post View**: Like button (thumbs-up icon with count) and comment form (input field and "Comment" button) are displayed below each post. Comments appear dynamically below the post without reloading.
+
+## Post Sharing
+
+### Overview
+- **Purpose**: Allow users to share posts via a link or with another user in the app.
+- **Pages**:
+  - **Home Page (`/home`)**: Share button on each post opens a modal.
+  - **Full Post View (`/post/<id>`)**: Share button on the post opens a modal.
+  - **User Profile Page (`/posts/<username>`)**: Share button on each post opens a modal.
+- **Modal**:
+  - Displays a shareable link with a "Copy" button.
+  - Includes an input to share with another user (with autocomplete) and a "Share" button.
+
+### Design Description
+- **Home Page and Full Post View**: Share button (share icon with "Share" text) opens a modal with a shareable link (text input with "Copy" button) and a section to share with another user (input field with autocomplete and "Share" button).
+
+## Monitoring with Grafana
+
+### Monitoring with Grafana
+- **Setup**: Grafana is configured with a Prometheus data source to monitor BLOGLITE app metrics.
+- **Dashboard**: Created a "BLOGLITE Monitoring" dashboard with panels for HTTP Requests Total, HTTP Request Duration, and Post Shares Total.
+- **Location**: Accessible at http://localhost:3000 (local setup).
+
+
+=== .\recreate_db.py ===
+from applicaton import create_app, db
+
+app = create_app()
+with app.app_context():
+    db.drop_all()
+    db.create_all()
+print("Database recreated successfully!")
+
+
+=== .\recreate_pf.py ===
+from applicaton import create_app, db
+
+app = create_app()
+with app.app_context():
+    db.drop_all()  # Drop all tables (just to be sure)
+    db.create_all()
+print("Database recreated with profile_picture field!")
+
+
+=== .\requirements.txt ===
+Error reading .\requirements.txt: 'utf-8' codec can't decode byte 0xff in position 0: invalid start byte
+
+
+=== .\reset_password.py ===
+from applicaton import create_app, db
+from applicaton.models import User
+from werkzeug.security import generate_password_hash
+
+app = create_app()
+with app.app_context():
+    # Query all users to find your account
+    users = User.query.all()
+    for user in users:
+        print(f"ID: {user.id}, Email: {user.email}, Username: {user.username}, Password (hashed): {user.password}")
+
+    # Reset password for a specific user (replace 'your.email@example.com' with your email)
+    user = User.query.filter_by(email='colinpaul.ebby2022@vitstudent.ac.in').first()
+    if user:
+        new_password = 'coolME@1412'  # Replace with your desired new password
+        user.password = generate_password_hash(new_password, method='pbkdf2:sha256')
+        db.session.commit()
+        print(f"Password for {user.email} has been reset to: {new_password}")
+    else:
+        print("User not found")
+
+
+=== .\seed_categories.py ===
+from applicaton import create_app, db
+from applicaton.models import Category
+
+app = create_app()
+with app.app_context():
+    categories = [
+        Category(name="Technology"),
+        Category(name="Lifestyle"),
+        Category(name="Travel"),
+        Category(name="Food"),
+    ]
+    db.session.add_all(categories)
+    db.session.commit()
+    print("Categories added!")
+
+
+=== .\applicaton\authentication.py ===
+from flask import Blueprint, render_template, redirect, url_for, request, flash
+from . import db
+from .models import User
+from flask_login import login_user, logout_user, login_required, current_user
+from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.utils import secure_filename
+import os
+
+authentication = Blueprint("authentication", __name__)
+
+@authentication.route("/login", methods=["GET", "POST"])
+def log_in():
+    if request.method == "POST":
+        email = request.form.get("email")
+        password = request.form.get("password")
+        user = User.query.filter_by(email=email).first()
+        if user:
+            if check_password_hash(user.password, password):
+                flash("Logged in!")
+                login_user(user, remember=True)
+                return redirect(url_for('views.home'))
+            else:
+                flash('Password is incorrect', category='error')
+        else:
+            flash('Email does not exist', category='error')
+    return render_template("login.html", user=current_user)
+
+@authentication.route("/sign-up", methods=["GET", "POST"])
+def sign_up():
+    if request.method == "POST":
+        email = request.form.get("email")
+        username = request.form.get("username")
+        password = request.form.get("password")
+        confirm_password = request.form.get("confirm_password")
+        profile_picture = request.files.get("profile_picture")
+
+        email_exist = User.query.filter_by(email=email).first()
+        user_exist = User.query.filter_by(username=username).first()
+
+        if email_exist:
+            flash('Email already exists', category='error')
+        elif user_exist:
+            flash('Username already exists', category='error')
+        elif password != confirm_password:
+            flash('Passwords do not match', category='error')
+        elif len(username) < 3:
+            flash('Username is too short', category='error')
+        elif len(password) < 6:
+            flash('Password is too short', category='error')
+        elif len(email) < 4:
+            flash("Email is invalid", category='error')
+        else:
+            profile_picture_filename = None
+            if profile_picture and profile_picture.filename:
+                profile_picture_filename = secure_filename(profile_picture.filename)
+                # Ensure the uploads directory exists
+                uploads_dir = os.path.join('applicaton', 'static', 'uploads')
+                os.makedirs(uploads_dir, exist_ok=True)
+                profile_picture.save(os.path.join(uploads_dir, profile_picture_filename))
+
+            new_user = User(
+                email=email,
+                username=username,
+                password=generate_password_hash(password, method='pbkdf2:sha256'),
+                profile_picture=profile_picture_filename
+            )
+            db.session.add(new_user)
+            db.session.commit()
+            login_user(new_user, remember=True)
+            flash('User created!')
+            return redirect(url_for('views.home'))
+    return render_template("signup.html", user=current_user)
+
+@authentication.route("/logout")
+@login_required
+def log_out():
+    logout_user()
+    return redirect(url_for("views.home"))
+
+@authentication.route("/settings", methods=["GET", "POST"])
+@login_required
+def settings():
+    if request.method == "POST":
+        new_username = request.form.get("username")
+        new_password = request.form.get("password")
+        confirm_password = request.form.get("confirm_password")
+
+        user_exist = User.query.filter_by(username=new_username).first()
+        if user_exist and user_exist != current_user:
+            flash("Sorry, that username is already taken", category='error')
+            return render_template("settings.html", user=current_user)
+        if new_password != confirm_password:
+            flash("Passwords do not match, please try again.", category='error')
+            return render_template("settings.html", user=current_user)
+        if len(new_username) < 3:
+            flash('Username is too short', category='error')
+            return render_template("settings.html", user=current_user)
+        if len(new_password) < 6:
+            flash('Password is too short', category='error')
+            return render_template("settings.html", user=current_user)
+        
+        current_user.username = new_username
+        current_user.password = generate_password_hash(new_password, method='pbkdf2:sha256')
+        db.session.commit()
+
+        flash("Your settings have been updated!", category='success')
+        return redirect(url_for('views.home'))
+    return render_template("settings.html", user=current_user)
+
+
+=== .\applicaton\models.py ===
+from . import db 
+from flask_login import UserMixin
+from sqlalchemy.sql import func
+
+class Follower(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    follower_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    date_followed = db.Column(db.DateTime(timezone=True), default=func.now())
+
+class User(db.Model, UserMixin):
+    id = db.Column(db.Integer, primary_key=True)
+    email = db.Column(db.String(150), unique=True)
+    username = db.Column(db.String(150), unique=True)
+    password = db.Column(db.String(150))
+    date_created = db.Column(db.DateTime(timezone=True), default=func.now())
+    profile_picture = db.Column(db.String(150), nullable=True)
+    posts = db.relationship("Post", backref="user", cascade="all, delete")
+    comments = db.relationship("Comment", backref="user", cascade="all, delete")
+    likes = db.relationship("Like", backref="user", cascade="all, delete")
+    followers = db.relationship("Follower", foreign_keys=[Follower.user_id], backref="followed_user", lazy="dynamic")
+    following = db.relationship("Follower", foreign_keys=[Follower.follower_id], backref="follower", lazy="dynamic")
+    notifications = db.relationship("Notification", backref="user", cascade="all, delete", lazy="dynamic")
+
+class Category(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(50), unique=True, nullable=False)
+    posts = db.relationship("Post", backref="category", cascade="all, delete")
+
+class Post(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(150), nullable=False)  # Add title field
+    text = db.Column(db.Text, nullable=False)
+    date_created = db.Column(db.DateTime(timezone=True), default=func.now())
+    author = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    category_id = db.Column(db.Integer, db.ForeignKey('category.id'), nullable=True)
+    comments = db.relationship("Comment", backref="post", cascade="all, delete")
+    likes = db.relationship("Like", backref="post", cascade="all, delete")
+
+class Comment(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    text = db.Column(db.String(20), nullable=False)
+    date_created = db.Column(db.DateTime(timezone=True), default=func.now())
+    author = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    post_id = db.Column(db.Integer, db.ForeignKey('post.id'), nullable=False)
+
+class Like(db.Model):  
+    id = db.Column(db.Integer, primary_key=True)
+    date_created = db.Column(db.DateTime(timezone=True), default=func.now())
+    author = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    post_id = db.Column(db.Integer, db.ForeignKey('post.id'), nullable=False)
+
+class Notification(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    message = db.Column(db.String(200), nullable=False)
+    date_created = db.Column(db.DateTime(timezone=True), default=func.now())
+
+
+=== .\applicaton\resources.py ===
+from flask import Flask, request, jsonify
+from flask_restful import Resource, Api
+from . import db # Import the database object from the current package
+from .models import User, Post, Comment, Like, Follower # Import the models
+
+
+api = Api()
+
+class UserEngagement(Resource):
+    def get(self, user_id):
+        # Retrieve the user with the specified ID
+        user = User.query.filter_by(id=user_id).first()
+        
+        if user:
+            
+            # Get the user's name
+            user_name= user.username
+            
+            # Get the user's posts, comments, and likes
+            posts = user.posts
+            comments = user.comments
+            likes = user.likes
+
+            # Calculate the total number of comments and likes for the user
+            total_comments = len(comments)
+            total_likes = len(likes)
+
+            # Calculate the total number of followers and followed users for the user
+            total_followers = user.followers.count()
+            total_following = user.following.count()
+
+            # Create a dictionary to store the user engagement data
+            user_engagement = {
+                'username': user_name,
+                'user_id': user_id,
+                'total_posts': len(posts),
+                'total_comments': total_comments,
+                'total_likes': total_likes,
+                'total_followers': total_followers,
+                'total_following': total_following
+            }
+
+            return {'user_engagement': user_engagement}
+        else:
+            # Return an error if the user is not found
+            return {'error': 'User not found.'}, 404
+
+api.add_resource(UserEngagement, '/api/user_engagement/<int:user_id>')
+
+
+
+
+=== .\applicaton\views.py ===
+from flask import Blueprint, render_template, request, flash, redirect, url_for, jsonify  # We need jsonify to send the list back
+from flask_login import login_required, current_user
+from sqlalchemy import true
+from .models import Post, User, Comment, Like, Follower, Notification,Category
+import requests
+from . import db
+from werkzeug.utils import secure_filename
+from prometheus_client import Counter
+import os
+
+
+
+
+# Import the registry from __init__.py
+from . import registry
+
+views = Blueprint("views", __name__)
+
+@views.route("/")
+@views.route("/home")
+@login_required
+def home():
+    # Get the IDs of users that the current user is following
+    following_ids = []
+    for follower in current_user.following:
+        following_ids.append(follower.user_id)
+
+    # Get the posts created by users that the current user is following
+    if following_ids:
+        following_posts = Post.query.filter(Post.author.in_(following_ids)).all()
+    else:
+        # If the user isn't following anyone, get all posts except their own
+        following_posts = Post.query.filter(Post.author != current_user.id).all()
+
+    # Get the current user's posts
+    user_posts = current_user.posts
+
+    # Combine the two lists and remove duplicates based on post ID
+    posts_dict = {post.id: post for post in following_posts + user_posts}
+    posts = list(posts_dict.values())
+
+    # Sort posts by date_created (most recent first)
+    posts.sort(key=lambda x: x.date_created, reverse=True)
+
+    return render_template("home.html", user=current_user, posts=posts)
+
+@login_required
+@views.route("/create-post", methods=['GET', 'POST'])
+def create_post():
+    if request.method == "POST":
+        title = request.form.get('title')  # Get title
+        text = request.form.get('text')
+        category_id = request.form.get('category_id')
+        if not title:
+            flash("Post title cannot be empty", category="error")
+        elif not text:
+            flash("Post content cannot be empty", category="error")
+        else:
+            post = Post(title=title, text=text, author=current_user.id)  # Include title
+            if category_id:
+                post.category_id = int(category_id)
+            db.session.add(post)
+            db.session.commit()
+            flash("Post created!", category='success')
+            return redirect(url_for('views.home'))
+    categories = Category.query.all()
+    return render_template("create_post.html", user=current_user, User=User, categories=categories)
+
+@views.route("/delete-post/<id>")
+@login_required
+def delete_post(id):
+    # Get post with specified id
+    post = Post.query.filter_by(id=id).first()
+
+    # Check if post exists
+    if not post:
+        flash("Post does not exist", category='error')
+    else:
+        # Delete post from the database
+        db.session.delete(post)
+        # Commit changes to the database
+        db.session.commit()
+        flash('Post deleted', category="success")
+
+    # Redirect to home page
+    return redirect(url_for('views.home'))
+
+@views.route("/posts/<username>")
+@login_required
+def post(username):
+    # Get the user with the specified username
+    user = User.query.filter_by(username=username).first()
+    # Check if the user exists
+    if not user:
+        flash("No user with that username exists", category="error")
+        return redirect(url_for('views.home'))
+    # Get all posts by the user
+    posts = user.posts
+
+    user_id = user.id
+
+    # Check if the current user is following the user
+    following = Follower.query.filter_by(
+        user_id=user.id, follower_id=current_user.id).first()
+
+    # Render the posts template and pass the current user, posts, username, User, following, user_id, and profile_user
+    return render_template("posts.html", user=current_user, posts=posts, username=username, User=User, following=following, user_id=user_id, profile_user=user)
+
+@views.route("/create-comment/<post_id>", methods=["POST"])
+@login_required
+def create_comment(post_id):
+    text = request.form.get('text')
+    if not text:
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({'error': 'Comment cannot be empty'}), 400
+        flash("Comment can not be empty", category="error")
+    else:
+        post = Post.query.filter_by(id=post_id).first()
+        if post:
+            comment = Comment(
+                text=text, author=current_user.id, post_id=post_id)
+            db.session.add(comment)
+            if post.author != current_user.id:
+                notification = Notification(
+                    user_id=post.author,
+                    message=f"{current_user.username} commented on your post."
+                )
+                db.session.add(notification)
+            db.session.commit()
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return jsonify({
+                    'comment': {
+                        'id': comment.id,
+                        'text': comment.text,
+                        'username': comment.user.username,
+                        'date': comment.date_created.strftime('%Y-%m-%d %H:%M:%S'),
+                        'can_delete': current_user.id == comment.author or current_user.id == post.author
+                    }
+                })
+        else:
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return jsonify({'error': 'Post does not exist'}), 404
+            flash("Post does not exist", category="error")
+    return redirect(url_for('views.home'))
+
+@views.route("/delete-comment/<comment_id>")
+@login_required
+def delete_comment(comment_id):
+    comment = Comment.query.filter_by(id=comment_id).first()
+    if not comment:
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({'error': 'Comment does not exist'}), 404
+        flash('Comment does not exist.', category='error')
+    elif current_user.id != comment.author and current_user.id != comment.post.author:
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({'error': 'You do not have permission to delete this comment'}), 403
+        flash('You do not have permission to delete this comment.', category='error')
+    else:
+        db.session.delete(comment)
+        db.session.commit()
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({'success': true})
+    return redirect(url_for('views.home'))
+
+@views.route("/like-post/<post_id>", methods=["GET"])
+@login_required
+def like(post_id):
+    post = Post.query.filter_by(id=post_id).first()
+    like = Like.query.filter_by(
+        author=current_user.id, post_id=post_id).first()
+    if not post:
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({'error': 'Post does not exist'}), 404
+        flash('Post does not exist', category='error')
+        return redirect(url_for('views.home'))
+    elif like:
+        db.session.delete(like)
+        db.session.commit()
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({'liked': False, 'likes': len(post.likes)})
+    else:
+        like = Like(author=current_user.id, post_id=post_id)
+        db.session.add(like)
+        if post.author != current_user.id:
+            notification = Notification(
+                user_id=post.author,
+                message=f"{current_user.username} liked your post."
+            )
+            db.session.add(notification)
+        db.session.commit()
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({'liked': True, 'likes': len(post.likes)})
+    return redirect(url_for('views.home'))
+
+
+@views.route("/follow_unfollow/<username>", methods=["POST"])
+@login_required
+def follow_unfollow(username):
+    # Get the user to follow/unfollow
+    user_to_follow = User.query.filter_by(username=username).first()
+
+    # Check if the user exists
+    if not user_to_follow:
+        flash("User does not exist", category="error")
+        return redirect(url_for("views.home"))
+    # Check if user tries to follow themselves
+    if user_to_follow.id == current_user.id:
+        flash("You cannot follow yourself", category="error")
+        return redirect(url_for("views.home"))
+
+    # Check if the current user is already following the user
+    following = Follower.query.filter_by(
+        user_id=user_to_follow.id, follower_id=current_user.id).first()
+
+    try:
+        if following:
+            # If the current user is already following the user, unfollow them
+            db.session.delete(following)
+            db.session.commit()
+            flash(
+                f"You have unfollowed {user_to_follow.username}", category="success")
+        else:
+            # If the current user is not already following the user, follow them
+            follow = Follower(user_id=user_to_follow.id,
+                              follower_id=current_user.id)
+            db.session.add(follow)
+            # Create a notification for the user being followed
+            if user_to_follow.id != current_user.id:
+                notification = Notification(
+                    user_id=user_to_follow.id,
+                    message=f"{current_user.username} started following you."
+                )
+                db.session.add(notification)
+            db.session.commit()
+            flash(
+                f"You are now following {user_to_follow.username}", category="success")
+    except Exception as e:
+        flash("An error occurred while following the user", category="error")
+        # You may want to log the exception for debugging purposes
+        raise e
+    return redirect(url_for('views.post', username=username))
+
+@views.route("/search", methods=["GET", "POST"])
+@login_required
+def search():
+    if request.method == "POST":
+        # Get the search query from the form
+        query = request.form.get("query")
+
+        # Search for users with a username that contains the query
+        users = User.query.filter(User.username.like(f"%{query}%")).all()
+
+        return render_template("search.html", user=current_user, users=users)
+    else:
+        # Render the search template when accessed via GET request
+        return render_template("search.html", user=current_user)
+
+@views.route("/search-autocomplete", methods=["GET"])
+@login_required
+def search_autocomplete():
+    # Get what the user typed (e.g., "Col")
+    query = request.args.get("query", "").strip()
+    if query:  # If the user typed something
+        # Find usernames that match (case-insensitive, e.g., "col" matches "ColinVIT")
+        users = User.query.filter(User.username.ilike(f"%{query}%")).limit(5).all()
+        # Make a list of matching usernames (e.g., ["ColinVIT"])
+        suggestions = [user.username for user in users]
+        # Send the list back as JSON (a format jQuery UI understands)
+        return jsonify(suggestions)
+    # If the user didn’t type anything, send an empty list
+    return jsonify([])
+
+@views.route("/upload-image", methods=['POST'])
+@login_required
+def upload_image():
+    print("DEBUG: Entering upload-image route")  # Debug log
+    if 'file' not in request.files:
+        print("DEBUG: No file part in request")
+        return jsonify({'error': 'No file part'}), 400
+    file = request.files['file']
+    if file.filename == '':
+        print("DEBUG: No selected file")
+        return jsonify({'error': 'No selected file'}), 400
+    if file:
+        filename = secure_filename(file.filename)
+        uploads_dir = os.path.join('applicaton', 'static', 'uploads')
+        os.makedirs(uploads_dir, exist_ok=True)
+        file_path = os.path.join(uploads_dir, filename)
+        print(f"DEBUG: Saving file to {file_path}")
+        file.save(file_path)
+        image_url = url_for('static', filename='uploads/' + filename)
+        print(f"DEBUG: Returning image URL: {image_url}")
+        return jsonify({'location': image_url})
+    print("DEBUG: File upload failed")
+    return jsonify({'error': 'File upload failed'}), 500
+
+@views.route("/edit/<id>", methods=['GET', 'POST'])
+@login_required
+def edit(id):
+    post = Post.query.get(id)
+    if not post or current_user.id != post.author:
+        flash("Post does not exist or you do not have permission to edit it",
+              category="error")
+        return redirect(url_for('views.home'))
+    if request.method == "GET":
+        return render_template("edit.html", user=current_user, post=post)
+    if request.method == "POST":
+        title = request.form.get('title')  # Get title
+        text = request.form.get('text')
+        if not title:
+            flash("Post title cannot be empty", category="error")
+        elif not text:
+            flash("Post content cannot be empty", category="error")
+        else:
+            post.title = title  # Update title
+            post.text = text
+            db.session.commit()
+            flash("Post updated!", category='success')
+            return redirect(url_for('views.home'))
+
+from prometheus_client import Counter
+
+POST_SHARES_TOTAL = Counter('bloglite_post_shares_total', 'Total number of post shares', registry=registry)
+
+
+@views.route("/share-post/<post_id>", methods=['POST'])
+@login_required
+def share_post(post_id):
+    post = Post.query.get(post_id)
+    if not post:
+        return jsonify({'error': 'Post does not exist'}), 404
+
+    data = request.get_json()
+    username = data.get('username')
+    if not username:
+        return jsonify({'error': 'Username is required'}), 400
+
+    recipient = User.query.filter_by(username=username).first()
+    if not recipient:
+        return jsonify({'error': 'User does not exist'}), 404
+    if recipient.id == current_user.id:
+        return jsonify({'error': 'You cannot share with yourself'}), 400
+
+    # Increment the counter
+    POST_SHARES_TOTAL.inc()
+
+    notification = Notification(
+        user_id=recipient.id,
+        message=f"{current_user.username} shared a post with you: <a href='{url_for('views.view_post', id=post.id)}'>{post.title}</a>"
+    )
+    db.session.add(notification)
+    db.session.commit()
+
+    return jsonify({'success': True})
+
+@views.route("/notifications")
+@login_required
+def notifications():
+    # Get the current user's notifications, ordered by most recent
+    notifications = current_user.notifications.order_by(Notification.date_created.desc()).all()
+    return render_template("notifications.html", user=current_user, notifications=notifications)
+
+@views.route("/clear-notifications", methods=["POST"])
+@login_required
+def clear_notifications():
+    # Delete all notifications for the current user
+    Notification.query.filter_by(user_id=current_user.id).delete()
+    db.session.commit()
+    flash("All notifications cleared!", category="success")
+    return redirect(url_for('views.notifications'))
+
+@views.route('/user_engagement/<int:user_id>')
+def user_engagement(user_id):
+    # Retrieve the user engagement data from the API
+    user_engagement = requests.get(
+        f'http://localhost:5000/api/user_engagement/{user_id}').json()
+    nested_dict = user_engagement['user_engagement']
+    # Render the user engagement template and pass the data to it
+    return render_template('user_engagement.html', user_engagement=nested_dict, user=current_user)
+
+@views.route("/post/<id>")
+@login_required
+def view_post(id):
+    post = Post.query.get(id)
+    if not post:
+        flash("Post does not exist", category="error")
+        return redirect(url_for('views.home'))
+    return render_template("view_post.html", user=current_user, post=post, User=User)
+
+
+
+
+=== .\applicaton\__init__.py ===
+# Import necessary modules and libraries
+from flask import Flask, Response, request
+from flask_sqlalchemy import SQLAlchemy
+from os import path, getenv
+from flask_login import LoginManager
+from prometheus_client import Counter, Histogram, generate_latest, CollectorRegistry, REGISTRY
+import time  # Added for request timing
+
+# Create a SQLAlchemy object for database management
+db = SQLAlchemy()
+
+# Define Prometheus metrics globally
+registry = CollectorRegistry()
+HTTP_REQUESTS_TOTAL = Counter('http_requests_total', 'Total HTTP requests', ['endpoint'], registry=registry)
+HTTP_REQUEST_DURATION_SECONDS = Histogram('http_request_duration_seconds', 'HTTP request duration', ['endpoint'], registry=registry)
+APP_INFO = Counter('app_info', 'Application info', ['version'], registry=registry)
+APP_INFO.labels(version='1.0.0').inc()
+
+def create_app():
+    # Create a Flask app instance
+    app = Flask(__name__)
+
+    # Middleware to track requests
+    @app.before_request
+    def before_request():
+        request.start_time = time.time()
+        endpoint = request.endpoint if request.endpoint else 'unknown'
+        HTTP_REQUESTS_TOTAL.labels(endpoint=endpoint).inc()
+
+    @app.after_request
+    def after_request(response):
+        endpoint = request.endpoint if request.endpoint else 'unknown'
+        duration = time.time() - request.start_time
+        HTTP_REQUEST_DURATION_SECONDS.labels(endpoint=endpoint).observe(duration)
+        return response
+
+    # Expose metrics endpoint
+    @app.route('/prometheus/metrics')
+    def metrics():
+        return Response(generate_latest(registry), mimetype='text/plain')
+
+    # Set the secret key for the app
+    app.config['SECRET_KEY'] = "perfetch"
+    app.config['SQLALCHEMY_DATABASE_URI'] = getenv('DATABASE_URL', 'sqlite:///database.db').replace('postgres://', 'postgresql://')
+    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+    # Initialize the SQLAlchemy object with the app
+    db.init_app(app)
+
+    # Import and initialize the API module
+    from .resources import api
+    api.init_app(app)
+
+    # Import and register the views blueprint
+    from .views import views
+    app.register_blueprint(views, url_prefix="/")
+
+    # Import and register the authentication blueprint
+    from .authentication import authentication
+    app.register_blueprint(authentication, url_prefix="/")
+
+    # Import the models
+    from .models import User, Post, Comment, Like, Follower
+
+    # Create the database if it does not exist
+    with app.app_context():
+        if not path.exists("database.db"):
+            db.create_all()
+            print("Created database!")
+
+    # Initialize the LoginManager
+    login_manager = LoginManager()
+    login_manager.login_view = "authentication.log_in"
+    login_manager.init_app(app)
+
+    # Define a user loader function for the LoginManager
+    @login_manager.user_loader
+    def load_user(id):
+        return User.query.get(int(id))
+
+    # Return the app instance
+    return app
+
+
+=== .\applicaton\templates\create_post.html ===
+{% extends "nav.html" %}
+{% block title %}Create Post{% endblock %}
+{% block content %}
+<div class="container mt-5">
+    <h3 align="center">Create a Post</h3>
+    <form method="POST" enctype="multipart/form-data">
+        <div class="form-group">
+            <label for="title">Post Title</label>
+            <input type="text" name="title" id="title" class="form-control" placeholder="Enter post title" required />
+            <label for="text">What's on your mind?</label>
+            <textarea name="text" id="text" class="form-control"></textarea>
+            <label for="category">Category</label>
+            <select name="category_id" id="category" class="form-control">
+                <option value="">Select a category (optional)</option>
+                {% for category in categories %}
+                    <option value="{{ category.id }}">{{ category.name }}</option>
+                {% endfor %}
+            </select>
+            <br />
+            <div align="center">
+                <button type="submit" class="btn btn-primary">Submit Post</button>
+            </div>
+        </div>
+    </form>
+    <div align="center" class="mt-3">
+        <a href="{{ url_for('views.home') }}"><button type="button" class="btn btn-secondary">Back to Home</button></a>
+    </div>
+</div>
+<!-- Load TinyMCE from Local Static Files -->
+<script src="{{ url_for('static', filename='tinymce/tinymce.min.js') }}"></script>
+<script>
+    tinymce.init({
+        selector: '#text',
+        plugins: 'image link media table code',
+        toolbar: 'undo redo | bold italic | alignleft aligncenter alignright | image link media | table | code',
+        images_upload_url: "{{ url_for('views.upload_image') }}",
+        images_upload_handler: function (blobInfo, success, failure) {
+            console.log('DEBUG: Starting image upload');  // Debug log
+            var xhr = new XMLHttpRequest();
+            xhr.open('POST', "{{ url_for('views.upload_image') }}", true);
+
+            xhr.onload = function () {
+                console.log('DEBUG: XHR onload, status:', xhr.status);  // Debug log
+                if (xhr.status === 200) {
+                    try {
+                        var json = JSON.parse(xhr.responseText);
+                        console.log('DEBUG: XHR response:', json);  // Debug log
+                        if (json.location) {
+                            success(json.location);
+                        } else {
+                            failure('Invalid response: missing location field');
+                        }
+                    } catch (e) {
+                        failure('Failed to parse response: ' + e.message);
+                    }
+                } else {
+                    failure('Image upload failed: HTTP Status ' + xhr.status);
+                }
+            };
+
+            xhr.onerror = function () {
+                console.error('DEBUG: XHR error');  // Debug log
+                failure('Image upload failed due to a network error');
+            };
+
+            var formData = new FormData();
+            formData.append('file', blobInfo.blob(), blobInfo.filename());
+            xhr.send(formData);
+        }
+    });
+</script>
+{% endblock %}
+
+
+=== .\applicaton\templates\edit.html ===
+{% extends "nav.html" %}
+{% block title %}Edit Post{% endblock %}
+{% block content %}
+<div class="container mt-5">
+    <h3 align="center">Edit Post</h3>
+    <form method="POST" enctype="multipart/form-data">
+        <div class="form-group">
+            <label for="title">Post Title</label>
+            <input type="text" name="title" id="title" class="form-control" value="{{ post.title }}" required />
+            <label for="text">Post Content</label>
+            <textarea name="text" id="text" class="form-control">{{ post.text }}</textarea>
+            <br />
+            <div align="center">
+                <button type="submit" class="btn btn-primary">Update Post</button>
+            </div>
+        </div>
+    </form>
+    <div align="center" class="mt-3">
+        <a href="{{ url_for('views.home') }}"><button type="button" class="btn btn-secondary">Back to Home</button></a>
+    </div>
+</div>
+<!-- Load TinyMCE from Local Static Files -->
+<script src="{{ url_for('static', filename='tinymce/tinymce.min.js') }}"></script>
+<script>
+    tinymce.init({
+        selector: '#text',
+        plugins: 'image link media table code',
+        toolbar: 'undo redo | bold italic | alignleft aligncenter alignright | image link media | table | code',
+        images_upload_url: "{{ url_for('views.upload_image') }}",
+        images_upload_handler: function (blobInfo, success, failure) {
+            console.log('DEBUG: Starting image upload');
+            var xhr = new XMLHttpRequest();
+            xhr.open('POST', "{{ url_for('views.upload_image') }}", true);
+
+            xhr.onload = function () {
+                console.log('DEBUG: XHR onload, status:', xhr.status);
+                if (xhr.status === 200) {
+                    try {
+                        var json = JSON.parse(xhr.responseText);
+                        console.log('DEBUG: XHR response:', json);
+                        if (json.location) {
+                            success(json.location);
+                        } else {
+                            failure('Invalid response: missing location field');
+                        }
+                    } catch (e) {
+                        failure('Failed to parse response: ' + e.message);
+                    }
+                } else {
+                    failure('Image upload failed: HTTP Status ' + xhr.status);
+                }
+            };
+
+            xhr.onerror = function () {
+                console.error('DEBUG: XHR error');
+                failure('Image upload failed due to a network error');
+            };
+
+            var formData = new FormData();
+            formData.append('file', blobInfo.blob(), blobInfo.filename());
+            xhr.send(formData);
+        }
+    });
+</script>
+{% endblock %}
+
+
+=== .\applicaton\templates\home.html ===
+{% extends "nav.html" %}
+{% block title %}Home{% endblock %}
+{% block content %}
+<div class="container mt-5">
+    <h1 align="center">Recent Posts</h1>
+    <!-- Category Filter -->
+    <form method="GET" action="{{ url_for('views.home') }}">
+        <div class="form-group">
+            <label for="category_id">Filter by Category</label>
+            <select name="category_id" id="category_id" class="form-control" onchange="this.form.submit()">
+                <option value="">All Categories</option>
+                {% for category in categories %}
+                    <option value="{{ category.id }}" {% if request.args.get('category_id')|string == category.id|string %}selected{% endif %}>{{ category.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </form>
+    <br />
+    <!-- Post Snippets -->
+    {% for post in posts %}
+        <div class="card mb-3">
+            <div class="profile-pic-container mr-3">
+                {% if post.user.profile_picture %}
+                    <img src="{{ url_for('static', filename='uploads/' + post.user.profile_picture) }}" alt="Profile Picture" class="profile-pic">
+                {% else %}
+                    <i class="fas fa-user-circle fa-2x"></i>
+                {% endif %}
+            </div>
+            <div class="card-body">
+                <h5 class="card-title">
+                    <a href="{{ url_for('views.post', username=post.user.username) }}">{{ post.user.username }}</a> 
+                    {% if post.category %}
+                        <span class="badge bg-primary">{{ post.category.name }}</span>
+                    {% endif %}
+                    <small class="text-muted">{{ post.date_created }}</small>
+                </h5>
+                <h4>{{ post.title }}</h4>
+                <p class="card-text">
+                    {% if post.text|length > 100 %}
+                        {{ post.text[:100] | safe }}... <a href="{{ url_for('views.view_post', id=post.id) }}">Read More</a>
+                    {% else %}
+                        {{ post.text | safe }} <a href="{{ url_for('views.view_post', id=post.id) }}">Read More</a>
+                    {% endif %}
+                </p>
+                <div>
+                    <a href="#" class="like-btn" data-post-id="{{ post.id }}">
+                        <i class="fas fa-thumbs-up"></i> <span class="like-count">{{ post.likes|length }}</span>
+                    </a>
+                    <a href="#" class="share-btn ml-3" data-post-id="{{ post.id }}" data-bs-toggle="modal" data-bs-target="#shareModal">
+                        <i class="fas fa-share"></i> Share
+                    </a>
+                </div>
+            </div>
+        </div>
+    {% endfor %}
+</div>
+
+<!-- Share Modal -->
+<div class="modal fade" id="shareModal" tabindex="-1" aria-labelledby="shareModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="shareModalLabel">Share Post</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="shareLink" class="form-label">Shareable Link</label>
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="shareLink" readonly>
+                        <button class="btn btn-primary" type="button" id="copyLinkBtn">Copy</button>
+                    </div>
+                </div>
+                <div>
+                    <label for="shareUser" class="form-label">Share with a User</label>
+                    <input type="text" class="form-control" id="shareUser" placeholder="Enter username">
+                    <button class="btn btn-primary mt-2" type="button" id="shareUserBtn">Share</button>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript for Likes and Sharing -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Handle Likes
+        document.querySelectorAll('.like-btn').forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+                const postId = this.getAttribute('data-post-id');
+                fetch(`/like-post/${postId}`, {
+                    method: 'GET',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        alert(data.error);
+                        return;
+                    }
+                    const likeCount = this.querySelector('.like-count');
+                    likeCount.textContent = data.likes;
+                    this.classList.toggle('liked', data.liked);
+                })
+                .catch(error => console.error('Error:', error));
+            });
+        });
+
+        // Handle Share Button Click
+        document.querySelectorAll('.share-btn').forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+                const postId = this.getAttribute('data-post-id');
+                const shareLink = `${window.location.origin}/post/${postId}`;
+                document.getElementById('shareLink').value = shareLink;
+                document.getElementById('shareUserBtn').setAttribute('data-post-id', postId);
+            });
+        });
+
+        // Handle Copy Link
+        document.getElementById('copyLinkBtn').addEventListener('click', function() {
+            const shareLinkInput = document.getElementById('shareLink');
+            shareLinkInput.select();
+            document.execCommand('copy');
+            alert('Link copied to clipboard!');
+        });
+
+        // Autocomplete for Share User
+        $(function() {
+            $("#shareUser").autocomplete({
+                source: function(request, response) {
+                    fetch(`/search-autocomplete?query=${request.term}`, {
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    })
+                    .then(res => res.json())
+                    .then(data => response(data));
+                },
+                minLength: 2
+            });
+        });
+
+        // Handle Share with User
+        document.getElementById('shareUserBtn').addEventListener('click', function() {
+            const username = document.getElementById('shareUser').value;
+            const postId = this.getAttribute('data-post-id');
+            if (!username) {
+                alert('Please enter a username to share with.');
+                return;
+            }
+            fetch(`/share-post/${postId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({ username: username })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert(data.error);
+                } else {
+                    alert('Post shared successfully!');
+                    document.getElementById('shareUser').value = ''; // Clear input
+                    $('#shareModal').modal('hide'); // Close modal
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        });
+    });
+</script>
+{% endblock %}
+
+
+=== .\applicaton\templates\login.html ===
+{% extends "nav.html"%}{% block title %}Login{% endblock %}
+{% block content %}
+<form method="POST">
+    <h3 align="center">Login</h3>
+    <div class="form-group">
+        <label for="email">Email Address</label>
+        <input type="text" id="email" name="email" class="form-control" placeholder="Enter Email" />
+        <label for="password">Password</label>
+        <input type="password" id="password" name="password" class="form-control" placeholder="Enter Password" />
+        <br />
+        <div align="center">
+            <button class="btn btn-primary" type="submit">Login</button>
+        </div>
+    </div>
+</form>
+
+{% endblock %}
+
+
+
+=== .\applicaton\templates\nav.html ===
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-rbsA2VBKQhggwzxH7pPCaAqO46MgnOM80zW1RWuH61DGLwZJEdK2Kadq2F9CUG65" crossorigin="anonymous">
+  <script src="https://kit.fontawesome.com/8590cd34e6.js" crossorigin="anonymous"></script>
+  <!-- Add jQuery and jQuery UI for autocomplete -->
+  <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <title>{% block title %}{% endblock %}</title>
+</head>
+<body>
+  <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="/home">BLOGLITE</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbar">
+        <div class="navbar-nav">
+          <a class="nav-item nav-link" href="/home">Home</a>
+          {% if user.is_authenticated %}
+            <a class="nav-item nav-link" href="/create-post">Create Post</a>
+            <a class="nav-item nav-link" href="/notifications">Notifications</a>
+            <div style="position: absolute; right: 57px;">
+              <form action="{{ url_for('views.search') }}" method="POST" class="d-flex" role="search">
+                <input type="search" placeholder="Search..." name="query" class="form-control me-2" id="search-input">
+              </form>
+            </div>
+            <div class="btn-group">
+              <button type="button" class="btn btn-sm btn-primary dropdown-toggle" data-bs-toggle="dropdown">{{ user.username }}</button>
+              <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                <li>
+                  <a href="{{ url_for('views.post', username=user.username) }}" class="dropdown-item">My Profile</a>
+                  <a href="/settings" class="dropdown-item">Settings</a>
+                  <a href="/logout" class="dropdown-item">Logout</a>
+                </li>
+              </ul>
+            </div>
+          {% else %}
+            <a class="nav-item nav-link" href="/login">Login</a>
+            <a class="nav-item nav-link" href="/sign-up">Sign Up</a>
+          {% endif %}
+          <!-- Dark Mode Toggle -->
+          <div class="form-check form-switch ms-3">
+            <input class="form-check-input" type="checkbox" id="darkModeToggle" onclick="toggleDarkMode()">
+            <label class="form-check-label text-white" for="darkModeToggle">Dark Mode</label>
+          </div>
+        </div>
+      </div>
+    </div>
+  </nav>
+  {% with messages = get_flashed_messages(with_categories=True) %}
+  {% if messages %}
+    {% for category, message in messages %}
+      {% if category == "error" %}
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+          {{ message }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+      {% else %}
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+          {{ message }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+      {% endif %}
+    {% endfor %}
+  {% endif %}
+  {% endwith %}
+  <div class="container">{% block content %}{% endblock %}</div>
+  <!-- JavaScript Bundle with Popper -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-kenU1KFdBIe4zVF0s0G1M5b4hcpxyD9F7jL+jjXkk+Q2h455rYXK/7HAuoJl+0I4" crossorigin="anonymous"></script>
+  <!-- Dark Mode Script -->
+  <script>
+    function toggleDarkMode() {
+      document.body.classList.toggle('dark-mode');
+      if (document.body.classList.contains('dark-mode')) {
+        localStorage.setItem('theme', 'dark');
+      } else {
+        localStorage.removeItem('theme');
+      }
+    }
+    if (localStorage.getItem('theme') === 'dark') {
+      document.body.classList.add('dark-mode');
+      document.getElementById('darkModeToggle').checked = true;
+    }
+  </script>
+  <!-- Autocomplete Script -->
+  <script>
+    // When the page is ready
+    $(document).ready(function() {
+      // Make the search bar (id="search-input") show suggestions
+      $("#search-input").autocomplete({
+        // This tells jQuery UI where to get the suggestions
+        source: function(request, response) {
+          // Send what the user typed (request.term) to the backend
+          $.ajax({
+            url: "{{ url_for('views.search_autocomplete') }}",
+            dataType: "json",
+            data: {
+              query: request.term  // What the user typed (e.g., "Col")
+            },
+            success: function(data) {
+              response(data);  // Show the suggestions (e.g., ["ColinVIT"])
+            }
+          });
+        },
+        minLength: 2  // Start suggesting after 2 letters
+      });
+    });
+  </script>
+</body>
+</html>
+
+
+=== .\applicaton\templates\notifications.html ===
+{% extends "nav.html" %}
+{% block title %}Notifications{% endblock %}
+{% block content %}
+<div class="container mt-5">
+    <h1 align="center">Notifications</h1>
+    {% if notifications %}
+        <form method="POST" action="{{ url_for('views.clear_notifications') }}">
+            <button type="submit" class="btn btn-danger mb-3">Clear All Notifications</button>
+        </form>
+        {% for notification in notifications %}
+            <div class="alert alert-info">
+                <p>{{ notification.message | safe }} <small>({{ notification.date_created }})</small></p>
+            </div>
+        {% endfor %}
+    {% else %}
+        <p>No notifications yet.</p>
+    {% endif %}
+</div>
+{% endblock %}
+
+
+=== .\applicaton\templates\posts.html ===
+{% extends "nav.html" %}
+{% block title %}{{ username }}'s Posts{% endblock %}
+{% block content %}
+<div class="container mt-5">
+    <div class="profile-pic-container mr-3">
+        {% if profile_user.profile_picture %}
+            <img src="{{ url_for('static', filename='uploads/' + profile_user.profile_picture) }}" alt="Profile Picture" class="profile-pic">
+        {% else %}
+            <i class="fas fa-user-circle fa-2x"></i>
+        {% endif %}
+    </div>
+    <h1>{{ username }}'s Posts</h1>
+    <h5>Joined: {{ profile_user.date_created }}</h5>
+    <h5>Followers: {{ profile_user.followers.count() }}</h5>
+    <h5>Following: {{ profile_user.following.count() }}</h5>
+    <form action="{{ url_for('views.follow_unfollow', username=username) }}" method="POST">
+        {% if following %}
+            <button type="submit" class="btn btn-danger">Unfollow</button>
+        {% else %}
+            <button type="submit" class="btn btn-primary">Follow</button>
+        {% endif %}
+    </form>
+    <br>
+    <a href="{{ url_for('views.user_engagement', user_id=user_id) }}" class="btn btn-info">User Engagement</a>
+    <br>
+    <br>
+    {% for post in posts %}
+        <div class="card mb-3">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <a href="{{ url_for('views.post', username=username) }}">{{ username }}</a> 
+                    {% if post.category %}
+                        <span class="badge bg-primary">{{ post.category.name }}</span>
+                    {% endif %}
+                    <small class="text-muted">{{ post.date_created }}</small>
+                </h5>
+                <h4>{{ post.title }}</h4>
+                <p class="card-text">{{ post.text | safe }}</p>
+                <div>
+                    <a href="#" class="like-btn" data-post-id="{{ post.id }}">
+                        <i class="fas fa-thumbs-up"></i> <span class="like-count">{{ post.likes|length }}</span>
+                    </a>
+                    <a href="#" class="share-btn ml-3" data-post-id="{{ post.id }}" data-bs-toggle="modal" data-bs-target="#shareModal">
+                        <i class="fas fa-share"></i> Share
+                    </a>
+                    {% if user.id == post.author %}
+                        <a href="{{ url_for('views.delete_post', id=post.id) }}" class="text-danger ml-3">
+                            <i class="fas fa-trash-alt"></i>
+                        </a>
+                        <a href="{{ url_for('views.edit', id=post.id) }}" class="text-primary ml-3">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                    {% endif %}
+                </div>
+                <h6 class="mt-3">Comments:</h6>
+                <div id="comments-{{ post.id }}">
+                    {% for comment in post.comments %}
+                        <p id="comment-{{ comment.id }}">
+                            <strong>{{ comment.user.username }}</strong> ({{ comment.date_created }}): {{ comment.text }}
+                            {% if user.id == comment.author or user.id == comment.post.author %}
+                                <a href="#" class="delete-comment text-danger ml-2" data-comment-id="{{ comment.id }}">
+                                    <i class="fas fa-trash-alt"></i>
+                                </a>
+                            {% endif %}
+                        </p>
+                    {% endfor %}
+                </div>
+                <form class="comment-form" method="POST" data-post-id="{{ post.id }}">
+                    <div class="form-group">
+                        <input type="text" name="text" class="comment-text form-control" placeholder="Add a comment...">
+                        <button type="submit" class="btn btn-primary mt-2">Comment</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    {% endfor %}
+</div>
+
+<!-- Share Modal -->
+<div class="modal fade" id="shareModal" tabindex="-1" aria-labelledby="shareModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="shareModalLabel">Share Post</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="shareLink" class="form-label">Shareable Link</label>
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="shareLink" readonly>
+                        <button class="btn btn-primary" type="button" id="copyLinkBtn">Copy</button>
+                    </div>
+                </div>
+                <div>
+                    <label for="shareUser" class="form-label">Share with a User</label>
+                    <input type="text" class="form-control" id="shareUser" placeholder="Enter username">
+                    <button class="btn btn-primary mt-2" type="button" id="shareUserBtn">Share</button>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript for Likes, Comments, and Sharing -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Handle Likes
+        document.querySelectorAll('.like-btn').forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+                const postId = this.getAttribute('data-post-id');
+                fetch(`/like-post/${postId}`, {
+                    method: 'GET',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        alert(data.error);
+                        return;
+                    }
+                    const likeCount = this.querySelector('.like-count');
+                    likeCount.textContent = data.likes;
+                    this.classList.toggle('liked', data.liked);
+                })
+                .catch(error => console.error('Error:', error));
+            });
+        });
+
+        // Handle Comment Submission
+        document.querySelectorAll('.comment-form').forEach(form => {
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                const postId = this.getAttribute('data-post-id');
+                const formData = new FormData(this);
+                fetch(`/create-comment/${postId}`, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        alert(data.error);
+                        return;
+                    }
+                    const commentsDiv = document.getElementById(`comments-${postId}`);
+                    const commentDiv = document.createElement('p');
+                    commentDiv.id = `comment-${data.comment.id}`;
+                    commentDiv.innerHTML = `<strong>${data.comment.username}</strong> (${data.comment.date}): ${data.comment.text}` +
+                        (data.comment.can_delete ? ` <a href="#" class="delete-comment text-danger ml-2" data-comment-id="${data.comment.id}"><i class="fas fa-trash-alt"></i></a>` : '');
+                    commentsDiv.appendChild(commentDiv);
+                    this.querySelector('.comment-text').value = '';
+                })
+                .catch(error => console.error('Error:', error));
+            });
+        });
+
+        // Handle Comment Deletion
+        document.addEventListener('click', function(e) {
+            if (e.target.closest('.delete-comment')) {
+                e.preventDefault();
+                const link = e.target.closest('.delete-comment');
+                const commentId = link.getAttribute('data-comment-id');
+                fetch(`/delete-comment/${commentId}`, {
+                    method: 'GET',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        alert(data.error);
+                        return;
+                    }
+                    document.getElementById(`comment-${commentId}`).remove();
+                })
+                .catch(error => console.error('Error:', error));
+            }
+        });
+
+        // Handle Share Button Click
+        document.querySelectorAll('.share-btn').forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+                const postId = this.getAttribute('data-post-id');
+                const shareLink = `${window.location.origin}/post/${postId}`;
+                document.getElementById('shareLink').value = shareLink;
+                document.getElementById('shareUserBtn').setAttribute('data-post-id', postId);
+            });
+        });
+
+        // Handle Copy Link
+        document.getElementById('copyLinkBtn').addEventListener('click', function() {
+            const shareLinkInput = document.getElementById('shareLink');
+            shareLinkInput.select();
+            document.execCommand('copy');
+            alert('Link copied to clipboard!');
+        });
+
+        // Autocomplete for Share User
+        $(function() {
+            $("#shareUser").autocomplete({
+                source: function(request, response) {
+                    fetch(`/search-autocomplete?query=${request.term}`, {
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    })
+                    .then(res => res.json())
+                    .then(data => response(data));
+                },
+                minLength: 2
+            });
+        });
+
+        // Handle Share with User
+        document.getElementById('shareUserBtn').addEventListener('click', function() {
+            const username = document.getElementById('shareUser').value;
+            const postId = this.getAttribute('data-post-id');
+            if (!username) {
+                alert('Please enter a username to share with.');
+                return;
+            }
+            fetch(`/share-post/${postId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({ username: username })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert(data.error);
+                } else {
+                    alert('Post shared successfully!');
+                    document.getElementById('shareUser').value = '';
+                    $('#shareModal').modal('hide');
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        });
+    });
+</script>
+{% endblock %}
+
+
+=== .\applicaton\templates\posts_div.html ===
+{% extends "nav.html" %}
+{% block title %}Home{% endblock %}
+{% block content %}
+<h1 align="center">{% block header %}Posts{% endblock %}</h1>
+<div id="posts">
+  {% for post in posts %}
+  <div class="card border-dark" data-post-id="{{ post.id }}">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <div class="d-flex align-items-center">
+        {% if post.user.profile_picture %}
+          <img src="{{ url_for('static', filename='uploads/' + post.user.profile_picture) }}" alt="Profile Picture" style="width: 40px; height: 40px; border-radius: 50%; margin-right: 10px;">
+        {% else %}
+          <i class="fa-solid fa-user-circle fa-2x" style="margin-right: 10px;"></i>
+        {% endif %}
+        <a href="/posts/{{ post.user.username }}">{{ post.user.username }}</a>
+      </div>
+      <div>
+        <span class="like-count">{{ post.likes|length }}</span>
+        <a href="/like-post/{{ post.id }}"><i class="fa-regular fa-thumbs-up"></i></a>
+        {% if user.id == post.author %}
+        <div class="btn-group">
+          <button type="button" class="btn btn-sm btn-primary dropdown-toggle" data-bs-toggle="dropdown"></button>
+          <ul class="dropdown-menu">
+            <li>
+              <a href="/delete-post/{{ post.id }}" class="dropdown-item">Delete</a>
+              <a href="{{ url_for('views.edit', id=post.id) }}" class="dropdown-item">Edit</a>
+            </li>
+          </ul>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="card-text">{{ post.text }}</div>
+      <br />
+      <div class="collapse" id="comments-{{ post.id }}">
+        <div class="card">
+          <div class="card-body" id="comments-expanded-{{ post.id }}">
+            {% for comment in post.comments %}
+            <div class="d-flex justify-content-between align-items-center" data-comment-id="{{ comment.id }}">
+              <div>
+                <a href="/posts/{{ comment.user.username }}">{{ comment.user.username }}</a>: {{ comment.text }}
+              </div>
+              <div>
+                <small class="text-muted">{{ comment.date_created }}</small>
+                {% if user.id == comment.author or user.id == post.author %}
+                <div class="btn-group">
+                  <button type="button" class="btn btn-sm btn-primary dropdown-toggle" data-bs-toggle="dropdown"></button>
+                  <ul class="dropdown-menu">
+                    <li>
+                      <a href="/delete-comment/{{ comment.id }}" class="dropdown-item">Delete</a>
+                    </li>
+                  </ul>
+                </div>
+                {% endif %}
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+      <p class="card-text">
+        {% if post.comments|length > 0 %}
+        <a data-bs-toggle="collapse" href="#comments-{{ post.id }}" role="button">
+          <small>View {{ post.comments|length }} Comments</small>
+        </a>
+        {% else %}
+        <small class="text-muted">No Comments</small>
+        {% endif %}
+      </p>
+      <form class="input-group mb-3" method="POST" action="/create-comment/{{ post.id }}">
+        <input type="text" id="text" name="text" class="form-control" placeholder="Comment something!" />
+        <button type="submit" class="btn btn-primary">Comment</button>
+      </form>
+    </div>
+    <div class="card-footer text-muted">{{ post.date_created }}</div>
+  </div>
+  <br />
+  {% endfor %}
+</div>
+{% block footer %}
+<div align="center">
+  <a href="/create-post"><button type="button" class="btn btn-primary btn-lg">Create a Post</button></a>
+</div>
+{% endblock %}
+{% endblock %}
+
+
+=== .\applicaton\templates\search.html ===
+{% extends "nav.html" %}
+
+{% block content %}
+<style>
+  .search-container {
+    width: 95%;
+    margin: auto;
+  }
+  
+  .search-container .Each-user {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 50%;
+    border-style: solid;
+    border-width: 1px;
+    border-color: #80808066;
+    padding: 0px 20px;
+    margin-bottom: 20px;
+    transition: 0.2s;
+  }
+  
+  .search-container .Each-user:hover {
+    box-shadow: 1px 1px 5px 3px #00000012;
+  }
+  
+  @media (max-width:600px) {
+    .search-container .Each-user {
+      width: 90%;
+    }
+  }
+  
+  .search-container .Each-user button {
+    background-color: blue; 
+    border: none;
+    color: white;
+    height: 26px;
+    border-radius: 5px;
+    font-family: monospace;
+  }
+  
+  
+  .search-container .Each-user button:hover {
+    background: #0000ffab;
+  }
+  
+  .search-container .Each-user h5 {
+    font-family: monospace;
+    font-size: 17px;
+  }
+  
+  </style>
+  <div class='search-container'>
+    <h1>Search</h1>
+    {% if users %}
+    {% for user in users %}
+      <div class="Each-user">
+        <h5>{{ user.username }}</h5>
+        <form action="{{ url_for('views.post', username=user.username) }}" method="GET" >
+          <button type="submit">View Profile</button>
+        </form>
+      </div>
+    {% endfor %}
+    {% else %}
+      <p>No users found.</p>
+    {% endif %}
+  </div>
+{% endblock %}
+
+
+
+=== .\applicaton\templates\settings.html ===
+{% extends "nav.html" %}
+
+{% block content %}
+<h1>Change Username and Password</h1>
+
+<form method="POST" action="{{ url_for('authentication.settings') }}">
+    <div class="form-group">
+        <label for="username">Username:</label>
+        <input type="text" name="username" class="form-control" value="{{ current_user.username }}" required>
+        <br>
+        <label for="password">New Password:</label>
+        <input type="password" class="form-control" name="password" required>
+        <br>
+        <label for="confirm_password">Confirm Password:</label>
+        <input type="password" class="form-control" name="confirm_password" required>
+        <br>
+        <input type="submit" value="Update">
+    </div>
+</form>
+{% endblock %}
+
+
+=== .\applicaton\templates\signup.html ===
+{% extends "nav.html" %}
+{% block title %}Sign Up{% endblock %}
+{% block content %}
+<form method="POST" enctype="multipart/form-data">
+    <h3 align="center">Sign Up</h3>
+    <div class="form-group">
+        <label for="email">Email Address</label>
+        <input type="text" id="email" name="email" class="form-control" placeholder="Enter Email" />
+        <label for="username">Username</label>
+        <input type="text" id="username" name="username" class="form-control" placeholder="Enter Username" />
+        <label for="password">Password</label>
+        <input type="password" id="password" name="password" class="form-control" placeholder="Enter Password" />
+        <label for="confirm_password">Confirm Password</label>
+        <input type="password" id="confirm_password" name="confirm_password" class="form-control" placeholder="Confirm Password" />
+        <label for="profile_picture">Profile Picture</label>
+        <input type="file" id="profile_picture" name="profile_picture" class="form-control" accept="image/*" />
+        <br />
+        <div align="center">
+            <button class="btn btn-primary" type="submit">Sign Up</button>
+        </div>
+    </div>
+</form>
+{% endblock %}
+
+
+=== .\applicaton\templates\user_engagement.html ===
+{% extends "nav.html" %}
+{% block title %}User Engagement{% endblock %}
+{% block content %}
+<style>
+  body {
+    margin: 0;
+    box-sizing: border-box;
+    font-family: 'Work Sans', sans-serif;
+  }
+
+  h3 {
+    margin: 10px;
+    color:#2c26269e;
+  }
+
+  .user-engage-container {
+    display: flex;
+    height: 100vh;
+    align-items: center;
+    justify-content: center;
+    background-color: #f5f4f4;
+  }
+
+  .user-box {
+    width: 50%;
+    box-shadow: 0px 0px 8px 0px #a0a0f3a6;
+    border-radius: 9px;
+    text-align: center;
+    transition: 0.3s;
+  }
+
+  .user-box:hover {
+    scale: 1.01;
+  }
+
+  .user-box h1 {
+    color: #0000ff99;
+    font-size: 40px;
+  }
+
+  .user-box .userid {
+    color: red;
+    margin-bottom: 30px;
+  }
+
+  .user-box .userid span {
+    color: #a80101;
+  }
+
+  .foll {
+    display: flex;
+    align-items: center;
+    justify-content: space-evenly;
+    margin: 16px 0px;
+  }
+
+  .followers {
+    border-right: 1px solid #00000040;
+    width: 50%;
+  }
+
+  .following {
+    width: 50%;
+  }
+
+  .post-comment-like {
+    display: flex;
+    align-items: center;
+    justify-content: space-evenly;
+    height: 80px;
+  }
+
+  .posts {
+     border-right: 1px solid #00000040;
+     width: 33.33%;
+  }
+
+  .comments {
+     border-right: 1px solid #00000040;
+      width: 33.33%;
+  }
+
+  .likes {
+    width: 33.33%;
+  }
+
+
+  @media (max-width:700px) {
+    .user-box {
+      width: 77%;
+    }
+  }
+
+  @media (max-width:500px) {
+    h3 {
+      font-size: 16px;
+    }
+
+    .user-box h1 {
+      font-size: 33px;
+    }
+  }
+</style>
+
+<div class="user-engage-container">
+  <div class="user-box">
+    <h1 class="userid">{{ user_engagement['username'] }}</h1>
+    <!-- <h3 class="userid">User ID: <span>{{ user_engagement['user_id'] }}</span></h3> -->
+    <hr>
+    <div class="foll">
+        <div class="followers">
+          <h3>Followers</h3>
+          <h3>{{ user_engagement['total_followers'] }}</h3>
+        </div>
+        <div class="following">
+          <h3>Following</h3>
+          <h3>{{ user_engagement['total_following'] }}</h3>
+        </div>
+      </div>
+      <hr>
+      <div class="post-comment-like">
+        <div class="posts">
+          <h3>Posts</h3>
+          <h3>{{ user_engagement['total_posts'] }}</h3>
+        </div>
+        <div class="comments">
+          <h3>Comments</h3>
+          <h3>{{ user_engagement['total_comments'] }}</h3>
+        </div>
+        <div class="likes">
+          <h3>Likes</h3>
+          <h3>{{ user_engagement['total_likes'] }}</h3>
+        </div>
+      </div>
+    </div>
+    </div>
+    {% endblock %}
+    
+
+
+=== .\applicaton\templates\view_post.html ===
+{% extends "nav.html" %}
+{% block title %}{{ post.title }}{% endblock %}
+{% block content %}
+<div class="container mt-5">
+    <div class="card mb-3">
+        <div class="profile-pic-container mr-3">
+            {% if post.user.profile_picture %}
+                <img src="{{ url_for('static', filename='uploads/' + post.user.profile_picture) }}" alt="Profile Picture" class="profile-pic">
+            {% else %}
+                <i class="fas fa-user-circle fa-2x"></i>
+            {% endif %}
+        </div>
+        <div class="card-body">
+            <h5 class="card-title">
+                <a href="{{ url_for('views.post', username=post.user.username) }}">{{ post.user.username }}</a> 
+                {% if post.category %}
+                    <span class="badge bg-primary">{{ post.category.name }}</span>
+                {% endif %}
+                <small class="text-muted">{{ post.date_created }}</small>
+            </h5>
+            <h4>{{ post.title }}</h4>
+            <p class="card-text">{{ post.text | safe }}</p>
+            <div>
+                <a href="#" class="like-btn" data-post-id="{{ post.id }}">
+                    <i class="fas fa-thumbs-up"></i> <span class="like-count">{{ post.likes|length }}</span>
+                </a>
+                <a href="#" class="share-btn ml-3" data-post-id="{{ post.id }}" data-bs-toggle="modal" data-bs-target="#shareModal">
+                    <i class="fas fa-share"></i> Share
+                </a>
+                {% if current_user.id == post.author %}
+                    <a href="{{ url_for('views.delete_post', id=post.id) }}" class="text-danger ml-3">
+                        <i class="fas fa-trash-alt"></i>
+                    </a>
+                    <a href="{{ url_for('views.edit', id=post.id) }}" class="text-primary ml-3">
+                        <i class="fas fa-edit"></i>
+                    </a>
+                {% endif %}
+            </div>
+            <h6 class="mt-3">Comments:</h6>
+            <div id="comments">
+                {% for comment in post.comments %}
+                    <p id="comment-{{ comment.id }}">
+                        <strong>{{ comment.user.username }}</strong> ({{ comment.date_created }}): {{ comment.text }}
+                        {% if current_user.id == comment.author or current_user.id == post.author %}
+                            <a href="#" class="delete-comment text-danger ml-2" data-comment-id="{{ comment.id }}">
+                                <i class="fas fa-trash-alt"></i>
+                            </a>
+                        {% endif %}
+                    </p>
+                {% endfor %}
+            </div>
+            <form id="comment-form" method="POST">
+                <div class="form-group">
+                    <input type="text" name="text" id="comment-text" class="form-control" placeholder="Add a comment...">
+                    <button type="submit" class="btn btn-primary mt-2">Comment</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <div align="center">
+        <a href="{{ url_for('views.home') }}"><button type="button" class="btn btn-secondary">Back to Home</button></a>
+    </div>
+</div>
+
+<!-- Share Modal -->
+<div class="modal fade" id="shareModal" tabindex="-1" aria-labelledby="shareModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="shareModalLabel">Share Post</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="shareLink" class="form-label">Shareable Link</label>
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="shareLink" readonly>
+                        <button class="btn btn-primary" type="button" id="copyLinkBtn">Copy</button>
+                    </div>
+                </div>
+                <div>
+                    <label for="shareUser" class="form-label">Share with a User</label>
+                    <input type="text" class="form-control" id="shareUser" placeholder="Enter username">
+                    <button class="btn btn-primary mt-2" type="button" id="shareUserBtn">Share</button>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript for Likes, Comments, and Sharing -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Handle Likes
+        document.querySelectorAll('.like-btn').forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+                const postId = this.getAttribute('data-post-id');
+                fetch(`/like-post/${postId}`, {
+                    method: 'GET',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        alert(data.error);
+                        return;
+                    }
+                    const likeCount = this.querySelector('.like-count');
+                    likeCount.textContent = data.likes;
+                    this.classList.toggle('liked', data.liked);
+                })
+                .catch(error => console.error('Error:', error));
+            });
+        });
+
+        // Handle Comment Submission
+        document.getElementById('comment-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            fetch(`/create-comment/{{ post.id }}`, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert(data.error);
+                    return;
+                }
+                const commentsDiv = document.getElementById('comments');
+                const commentDiv = document.createElement('p');
+                commentDiv.id = `comment-${data.comment.id}`;
+                commentDiv.innerHTML = `<strong>${data.comment.username}</strong> (${data.comment.date}): ${data.comment.text}` +
+                    (data.comment.can_delete ? ` <a href="#" class="delete-comment text-danger ml-2" data-comment-id="${data.comment.id}"><i class="fas fa-trash-alt"></i></a>` : '');
+                commentsDiv.appendChild(commentDiv);
+                document.getElementById('comment-text').value = '';
+            })
+            .catch(error => console.error('Error:', error));
+        });
+
+        // Handle Comment Deletion
+        document.addEventListener('click', function(e) {
+            if (e.target.closest('.delete-comment')) {
+                e.preventDefault();
+                const link = e.target.closest('.delete-comment');
+                const commentId = link.getAttribute('data-comment-id');
+                fetch(`/delete-comment/${commentId}`, {
+                    method: 'GET',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        alert(data.error);
+                        return;
+                    }
+                    document.getElementById(`comment-${commentId}`).remove();
+                })
+                .catch(error => console.error('Error:', error));
+            }
+        });
+
+        // Handle Share Button Click
+        document.querySelectorAll('.share-btn').forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+                const postId = this.getAttribute('data-post-id');
+                const shareLink = `${window.location.origin}/post/${postId}`;
+                document.getElementById('shareLink').value = shareLink;
+                document.getElementById('shareUserBtn').setAttribute('data-post-id', postId);
+            });
+        });
+
+        // Handle Copy Link
+        document.getElementById('copyLinkBtn').addEventListener('click', function() {
+            const shareLinkInput = document.getElementById('shareLink');
+            shareLinkInput.select();
+            document.execCommand('copy');
+            alert('Link copied to clipboard!');
+        });
+
+        // Autocomplete for Share User
+        $(function() {
+            $("#shareUser").autocomplete({
+                source: function(request, response) {
+                    fetch(`/search-autocomplete?query=${request.term}`, {
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    })
+                    .then(res => res.json())
+                    .then(data => response(data));
+                },
+                minLength: 2
+            });
+        });
+
+        // Handle Share with User
+        document.getElementById('shareUserBtn').addEventListener('click', function() {
+            const username = document.getElementById('shareUser').value;
+            const postId = this.getAttribute('data-post-id');
+            if (!username) {
+                alert('Please enter a username to share with.');
+                return;
+            }
+            fetch(`/share-post/${postId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({ username: username })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert(data.error);
+                } else {
+                    alert('Post shared successfully!');
+                    document.getElementById('shareUser').value = '';
+                    $('#shareModal').modal('hide');
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        });
+    });
+</script>
+{% endblock %}
+
