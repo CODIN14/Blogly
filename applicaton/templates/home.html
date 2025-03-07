@@ -4,10 +4,10 @@
 <div class="container mt-5">
     <h1 align="center">Recent Posts</h1>
     <!-- Category Filter -->
-    <form method="GET" action="{{ url_for('views.home') }}">
+    <form method="GET" action="{{ url_for('views.home') }}" id="categoryFilterForm">
         <div class="form-group">
             <label for="category_id">Filter by Category</label>
-            <select name="category_id" id="category_id" class="form-control" onchange="this.form.submit()">
+            <select name="category_id" id="category_id" class="form-control">
                 <option value="">All Categories</option>
                 {% for category in categories %}
                     <option value="{{ category.id }}" {% if request.args.get('category_id')|string == category.id|string %}selected{% endif %}>{{ category.name }}</option>
@@ -15,6 +15,18 @@
             </select>
         </div>
     </form>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const select = document.getElementById('category_id');
+            const form = document.getElementById('categoryFilterForm');
+            select.addEventListener('change', function() {
+                console.log('Selected category_id: ' + this.value);
+                console.log('Submitting form to: ' + form.action);
+                form.submit();
+            });
+        });
+    </script>
     <br />
     <!-- Post Snippets -->
     {% for post in posts %}

@@ -7,7 +7,9 @@ from . import db
 from werkzeug.utils import secure_filename
 from prometheus_client import Counter
 import os
-
+import logging
+import logging
+from flask import request
 
 
 
@@ -16,39 +18,56 @@ from . import registry
 
 views = Blueprint("views", __name__)
 
+
+
+
+
+
 @views.route("/")
 @views.route("/home")
 @login_required
 def home():
-    # Get the IDs of users that the current user is following
-    following_ids = []
-    for follower in current_user.following:
-        following_ids.append(follower.user_id)
+    logging.basicConfig(level=logging.DEBUG)
+    logger = logging.getLogger(__name__)
 
-    # Get the posts created by users that the current user is following
-    if following_ids:
-        following_posts = Post.query.filter(Post.author.in_(following_ids)).all()
-    else:
-        # If the user isn't following anyone, get all posts except their own
-        following_posts = Post.query.filter(Post.author != current_user.id).all()
+    category_id = request.args.get('category_id')
+    logger.debug(f"Received category_id: {category_id}")
 
-    # Get the current user's posts
-    user_posts = current_user.posts
+    # Get following users
+    following_ids = [follower.user_id for follower in current_user.following]
+    following_ids.append(current_user.id)  # Include current user's posts
+    logger.debug(f"Following IDs (including self): {following_ids}")
 
-    # Combine the two lists and remove duplicates based on post ID
-    posts_dict = {post.id: post for post in following_posts + user_posts}
-    posts = list(posts_dict.values())
+    # Build the query
+    query = Post.query.filter(Post.author.in_(following_ids))
 
-    # Sort posts by date_created (most recent first)
-    posts.sort(key=lambda x: x.date_created, reverse=True)
+    # Apply category filter
+    if category_id and category_id != "":
+        try:
+            category_id_int = int(category_id)
+            query = query.filter(Post.category_id == category_id_int)
+            logger.debug(f"Applied category filter for ID: {category_id_int}")
+        except ValueError:
+            logger.error(f"Invalid category_id: {category_id}")
 
-    return render_template("home.html", user=current_user, posts=posts)
+    # Execute query
+    posts = query.order_by(Post.date_created.desc()).all()
+    logger.debug(f"Filtered posts count: {len(posts)}")
+    for post in posts:
+        logger.debug(f"Post - ID: {post.id}, Title: {post.title}, Category ID: {post.category_id}")
+
+    # Get categories for the dropdown
+    categories = Category.query.all()
+    logger.debug(f"Categories available: {[category.name for category in categories]}")
+
+    return render_template("home.html", user=current_user, posts=posts, categories=categories)
+
 
 @login_required
 @views.route("/create-post", methods=['GET', 'POST'])
 def create_post():
     if request.method == "POST":
-        title = request.form.get('title')  # Get title
+        title = request.form.get('title')
         text = request.form.get('text')
         category_id = request.form.get('category_id')
         if not title:
@@ -56,15 +75,17 @@ def create_post():
         elif not text:
             flash("Post content cannot be empty", category="error")
         else:
-            post = Post(title=title, text=text, author=current_user.id)  # Include title
+            post = Post(title=title, text=text, author=current_user.id)
             if category_id:
                 post.category_id = int(category_id)
             db.session.add(post)
             db.session.commit()
             flash("Post created!", category='success')
             return redirect(url_for('views.home'))
-    categories = Category.query.all()
+    categories = Category.query.all()  # Query all categories
     return render_template("create_post.html", user=current_user, User=User, categories=categories)
+
+
 
 @views.route("/delete-post/<id>")
 @login_required
