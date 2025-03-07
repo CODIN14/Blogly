@@ -22,7 +22,6 @@ views = Blueprint("views", __name__)
 
 
 
-
 @views.route("/")
 @views.route("/home")
 @login_required
@@ -33,15 +32,10 @@ def home():
     category_id = request.args.get('category_id')
     logger.debug(f"Received category_id: {category_id}")
 
-    # Get following users
-    following_ids = [follower.user_id for follower in current_user.following]
-    following_ids.append(current_user.id)  # Include current user's posts
-    logger.debug(f"Following IDs (including self): {following_ids}")
+    # Build the query for all posts
+    query = Post.query
 
-    # Build the query
-    query = Post.query.filter(Post.author.in_(following_ids))
-
-    # Apply category filter
+    # Apply category filter if provided
     if category_id and category_id != "":
         try:
             category_id_int = int(category_id)
@@ -50,7 +44,7 @@ def home():
         except ValueError:
             logger.error(f"Invalid category_id: {category_id}")
 
-    # Execute query
+    # Execute query and sort by date_created (most recent first)
     posts = query.order_by(Post.date_created.desc()).all()
     logger.debug(f"Filtered posts count: {len(posts)}")
     for post in posts:
@@ -61,7 +55,6 @@ def home():
     logger.debug(f"Categories available: {[category.name for category in categories]}")
 
     return render_template("home.html", user=current_user, posts=posts, categories=categories)
-
 
 @login_required
 @views.route("/create-post", methods=['GET', 'POST'])

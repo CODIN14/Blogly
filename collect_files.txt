@@ -61,6 +61,22 @@ if __name__=="__main__":
     app.run(debug=True)
 
 
+=== .\check_categories.py ===
+from applicaton import create_app, db
+from applicaton.models import Category, Post
+
+app = create_app()
+with app.app_context():
+    categories = Category.query.all()
+    if categories:
+        print("Categories and their posts:")
+        for category in categories:
+            posts = Post.query.filter_by(category_id=category.id).all()
+            print(f"Category: {category.name} (ID: {category.id}), Posts: {[p.title for p in posts]}")
+    else:
+        print("No categories found.")
+
+
 === .\check_users.py ===
 from applicaton import create_app, db
 from applicaton.models import User
@@ -204,6 +220,16 @@ This document outlines the design aspects of the BLOGLITE app, including feature
 - **Location**: Accessible at http://localhost:3000 (local setup).
 
 
+=== .\prometheus.yml ===
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: 'bloglite'
+    static_configs:
+      - targets: ['host.docker.internal:5000']
+
+
 === .\recreate_db.py ===
 from applicaton import create_app, db
 
@@ -266,6 +292,10 @@ with app.app_context():
     db.session.add_all(categories)
     db.session.commit()
     print("Categories added!")
+
+
+=== .\uninstall_list.txt ===
+Error reading .\uninstall_list.txt: 'utf-8' codec can't decode byte 0xff in position 0: invalid start byte
 
 
 === .\applicaton\authentication.py ===
@@ -502,7 +532,9 @@ from . import db
 from werkzeug.utils import secure_filename
 from prometheus_client import Counter
 import os
-
+import logging
+import logging
+from flask import request
 
 
 
@@ -511,39 +543,49 @@ from . import registry
 
 views = Blueprint("views", __name__)
 
+
+
+
+
 @views.route("/")
 @views.route("/home")
 @login_required
 def home():
-    # Get the IDs of users that the current user is following
-    following_ids = []
-    for follower in current_user.following:
-        following_ids.append(follower.user_id)
+    logging.basicConfig(level=logging.DEBUG)
+    logger = logging.getLogger(__name__)
 
-    # Get the posts created by users that the current user is following
-    if following_ids:
-        following_posts = Post.query.filter(Post.author.in_(following_ids)).all()
-    else:
-        # If the user isn't following anyone, get all posts except their own
-        following_posts = Post.query.filter(Post.author != current_user.id).all()
+    category_id = request.args.get('category_id')
+    logger.debug(f"Received category_id: {category_id}")
 
-    # Get the current user's posts
-    user_posts = current_user.posts
+    # Build the query for all posts
+    query = Post.query
 
-    # Combine the two lists and remove duplicates based on post ID
-    posts_dict = {post.id: post for post in following_posts + user_posts}
-    posts = list(posts_dict.values())
+    # Apply category filter if provided
+    if category_id and category_id != "":
+        try:
+            category_id_int = int(category_id)
+            query = query.filter(Post.category_id == category_id_int)
+            logger.debug(f"Applied category filter for ID: {category_id_int}")
+        except ValueError:
+            logger.error(f"Invalid category_id: {category_id}")
 
-    # Sort posts by date_created (most recent first)
-    posts.sort(key=lambda x: x.date_created, reverse=True)
+    # Execute query and sort by date_created (most recent first)
+    posts = query.order_by(Post.date_created.desc()).all()
+    logger.debug(f"Filtered posts count: {len(posts)}")
+    for post in posts:
+        logger.debug(f"Post - ID: {post.id}, Title: {post.title}, Category ID: {post.category_id}")
 
-    return render_template("home.html", user=current_user, posts=posts)
+    # Get categories for the dropdown
+    categories = Category.query.all()
+    logger.debug(f"Categories available: {[category.name for category in categories]}")
+
+    return render_template("home.html", user=current_user, posts=posts, categories=categories)
 
 @login_required
 @views.route("/create-post", methods=['GET', 'POST'])
 def create_post():
     if request.method == "POST":
-        title = request.form.get('title')  # Get title
+        title = request.form.get('title')
         text = request.form.get('text')
         category_id = request.form.get('category_id')
         if not title:
@@ -551,15 +593,17 @@ def create_post():
         elif not text:
             flash("Post content cannot be empty", category="error")
         else:
-            post = Post(title=title, text=text, author=current_user.id)  # Include title
+            post = Post(title=title, text=text, author=current_user.id)
             if category_id:
                 post.category_id = int(category_id)
             db.session.add(post)
             db.session.commit()
             flash("Post created!", category='success')
             return redirect(url_for('views.home'))
-    categories = Category.query.all()
+    categories = Category.query.all()  # Query all categories
     return render_template("create_post.html", user=current_user, User=User, categories=categories)
+
+
 
 @views.route("/delete-post/<id>")
 @login_required
@@ -1120,10 +1164,10 @@ def create_app():
 <div class="container mt-5">
     <h1 align="center">Recent Posts</h1>
     <!-- Category Filter -->
-    <form method="GET" action="{{ url_for('views.home') }}">
+    <form method="GET" action="{{ url_for('views.home') }}" id="categoryFilterForm">
         <div class="form-group">
             <label for="category_id">Filter by Category</label>
-            <select name="category_id" id="category_id" class="form-control" onchange="this.form.submit()">
+            <select name="category_id" id="category_id" class="form-control">
                 <option value="">All Categories</option>
                 {% for category in categories %}
                     <option value="{{ category.id }}" {% if request.args.get('category_id')|string == category.id|string %}selected{% endif %}>{{ category.name }}</option>
@@ -1131,6 +1175,18 @@ def create_app():
             </select>
         </div>
     </form>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const select = document.getElementById('category_id');
+            const form = document.getElementById('categoryFilterForm');
+            select.addEventListener('change', function() {
+                console.log('Selected category_id: ' + this.value);
+                console.log('Submitting form to: ' + form.action);
+                form.submit();
+            });
+        });
+    </script>
     <br />
     <!-- Post Snippets -->
     {% for post in posts %}

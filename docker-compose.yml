@@ -1,0 +1,28 @@
+services:
+  bloglite:
+    build: .
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./instance:/app/instance
+    networks:
+      - bloglite-network
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    networks:
+      - bloglite-network
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    volumes:
+      - C:\Users\colin\Downloads\grafana-enterprise-11.5.2.windows-amd64\grafana-v11.5.2\data:/var/lib/grafana
+    networks:
+      - bloglite-network
+networks:
+  bloglite-network:
+    driver: bridge
