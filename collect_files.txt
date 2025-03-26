@@ -56,9 +56,10 @@ paths:
 === .\app.py ===
 from applicaton import create_app
 
-if __name__=="__main__":
-    app = create_app()
-    app.run(debug=True)
+app = create_app()
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000, debug=True)
 
 
 === .\check_categories.py ===
@@ -220,14 +221,54 @@ This document outlines the design aspects of the BLOGLITE app, including feature
 - **Location**: Accessible at http://localhost:3000 (local setup).
 
 
+=== .\docker-compose.yml ===
+services:
+  bloglite:
+    build: .
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./instance:/app/instance
+    networks:
+      - bloglite-network
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    networks:
+      - bloglite-network
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana-data:/var/lib/grafana
+    networks:
+      - bloglite-network
+  selenium:
+    image: selenium/standalone-chrome:latest
+    ports:
+      - "4444:4444"
+    networks:
+      - bloglite-network
+networks:
+  bloglite-network:
+    driver: bridge
+volumes:
+  grafana-data:
+
+
 === .\prometheus.yml ===
 global:
   scrape_interval: 15s
 
 scrape_configs:
   - job_name: 'bloglite'
+    metrics_path: /prometheus/metrics  # Specify the correct endpoint
     static_configs:
-      - targets: ['host.docker.internal:5000']
+      - targets: ['bloglite:5000']
 
 
 === .\recreate_db.py ===
@@ -306,18 +347,46 @@ from flask_login import login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 import os
+import requests  # Add this import for reCAPTCHA validation
 
 authentication = Blueprint("authentication", __name__)
+
+# reCAPTCHA Secret Key
+RECAPTCHA_SECRET_KEY = '6Lf41v4qAAAAAA3QkItiyOV3saLqNIt53YTEDYH1'  # Replace with your reCAPTCHA Secret Key
 
 @authentication.route("/login", methods=["GET", "POST"])
 def log_in():
     if request.method == "POST":
+        # Get the reCAPTCHA response from the form
+        recaptcha_response = request.form.get('g-recaptcha-response')
+
+        # Verify reCAPTCHA with Google's API
+        if not recaptcha_response:
+            flash('Please complete the reCAPTCHA to proceed.', category='error')
+            return render_template("login.html", user=current_user)
+
+        # Send a request to Google's reCAPTCHA API to verify the response
+        verify_url = 'https://www.google.com/recaptcha/api/siteverify'
+        payload = {
+            'secret': RECAPTCHA_SECRET_KEY,
+            'response': recaptcha_response,
+            'remoteip': request.remote_addr
+        }
+        response = requests.post(verify_url, data=payload)
+        result = response.json()
+
+        # Check if reCAPTCHA verification was successful
+        if not result.get('success'):
+            flash('reCAPTCHA verification failed. Please try again.', category='error')
+            return render_template("login.html", user=current_user)
+
+        # Proceed with login if reCAPTCHA is valid
         email = request.form.get("email")
         password = request.form.get("password")
         user = User.query.filter_by(email=email).first()
         if user:
             if check_password_hash(user.password, password):
-                flash("Logged in!")
+                flash("Logged in!", category='success')
                 login_user(user, remember=True)
                 return redirect(url_for('views.home'))
             else:
@@ -354,7 +423,6 @@ def sign_up():
             profile_picture_filename = None
             if profile_picture and profile_picture.filename:
                 profile_picture_filename = secure_filename(profile_picture.filename)
-                # Ensure the uploads directory exists
                 uploads_dir = os.path.join('applicaton', 'static', 'uploads')
                 os.makedirs(uploads_dir, exist_ok=True)
                 profile_picture.save(os.path.join(uploads_dir, profile_picture_filename))
@@ -368,7 +436,7 @@ def sign_up():
             db.session.add(new_user)
             db.session.commit()
             login_user(new_user, remember=True)
-            flash('User created!')
+            flash('User created!', category='success')
             return redirect(url_for('views.home'))
     return render_template("signup.html", user=current_user)
 
@@ -909,13 +977,43 @@ def clear_notifications():
     return redirect(url_for('views.notifications'))
 
 @views.route('/user_engagement/<int:user_id>')
+@login_required
 def user_engagement(user_id):
-    # Retrieve the user engagement data from the API
-    user_engagement = requests.get(
-        f'http://localhost:5000/api/user_engagement/{user_id}').json()
-    nested_dict = user_engagement['user_engagement']
-    # Render the user engagement template and pass the data to it
-    return render_template('user_engagement.html', user_engagement=nested_dict, user=current_user)
+    # Retrieve the user with the specified ID
+    user = User.query.filter_by(id=user_id).first()
+    
+    if user:
+        # Get the user's name
+        user_name = user.username
+        
+        # Get the user's posts, comments, and likes
+        posts = user.posts
+        comments = user.comments
+        likes = user.likes
+
+        # Calculate the total number of comments and likes for the user
+        total_comments = len(comments)
+        total_likes = len(likes)
+
+        # Calculate the total number of followers and followed users for the user
+        total_followers = user.followers.count()
+        total_following = user.following.count()
+
+        # Create a dictionary to store the user engagement data
+        user_engagement = {
+            'username': user_name,
+            'user_id': user_id,
+            'total_posts': len(posts),
+            'total_comments': total_comments,
+            'total_likes': total_likes,
+            'total_followers': total_followers,
+            'total_following': total_following
+        }
+        
+        # Render the user engagement template and pass the data to it
+        return render_template('user_engagement.html', user_engagement=user_engagement, user=current_user)
+    else:
+        return "Error: User not found.", 404
 
 @views.route("/post/<id>")
 @login_required
@@ -936,7 +1034,7 @@ from flask_sqlalchemy import SQLAlchemy
 from os import path, getenv
 from flask_login import LoginManager
 from prometheus_client import Counter, Histogram, generate_latest, CollectorRegistry, REGISTRY
-import time  # Added for request timing
+import time
 
 # Create a SQLAlchemy object for database management
 db = SQLAlchemy()
@@ -1353,7 +1451,8 @@ def create_app():
 
 
 === .\applicaton\templates\login.html ===
-{% extends "nav.html"%}{% block title %}Login{% endblock %}
+{% extends "nav.html" %}
+{% block title %}Login{% endblock %}
 {% block content %}
 <form method="POST">
     <h3 align="center">Login</h3>
@@ -1363,14 +1462,17 @@ def create_app():
         <label for="password">Password</label>
         <input type="password" id="password" name="password" class="form-control" placeholder="Enter Password" />
         <br />
+        <!-- Add reCAPTCHA widget -->
+        <div class="g-recaptcha" data-sitekey="6Lf41v4qAAAAAHYauxeepmRqtz-ltw-EQ9LuXOtE"></div>
+        <br />
         <div align="center">
             <button class="btn btn-primary" type="submit">Login</button>
         </div>
     </div>
 </form>
-
+<!-- Include reCAPTCHA script -->
+<script src="https://www.google.com/recaptcha/api.js" async defer></script>
 {% endblock %}
-
 
 
 === .\applicaton\templates\nav.html ===

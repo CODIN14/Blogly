@@ -5,18 +5,46 @@ from flask_login import login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 import os
+import requests  # Add this import for reCAPTCHA validation
 
 authentication = Blueprint("authentication", __name__)
+
+# reCAPTCHA Secret Key
+RECAPTCHA_SECRET_KEY = '6Lf41v4qAAAAAA3QkItiyOV3saLqNIt53YTEDYH1'  # Replace with your reCAPTCHA Secret Key
 
 @authentication.route("/login", methods=["GET", "POST"])
 def log_in():
     if request.method == "POST":
+        # Get the reCAPTCHA response from the form
+        recaptcha_response = request.form.get('g-recaptcha-response')
+
+        # Verify reCAPTCHA with Google's API
+        if not recaptcha_response:
+            flash('Please complete the reCAPTCHA to proceed.', category='error')
+            return render_template("login.html", user=current_user)
+
+        # Send a request to Google's reCAPTCHA API to verify the response
+        verify_url = 'https://www.google.com/recaptcha/api/siteverify'
+        payload = {
+            'secret': RECAPTCHA_SECRET_KEY,
+            'response': recaptcha_response,
+            'remoteip': request.remote_addr
+        }
+        response = requests.post(verify_url, data=payload)
+        result = response.json()
+
+        # Check if reCAPTCHA verification was successful
+        if not result.get('success'):
+            flash('reCAPTCHA verification failed. Please try again.', category='error')
+            return render_template("login.html", user=current_user)
+
+        # Proceed with login if reCAPTCHA is valid
         email = request.form.get("email")
         password = request.form.get("password")
         user = User.query.filter_by(email=email).first()
         if user:
             if check_password_hash(user.password, password):
-                flash("Logged in!")
+                flash("Logged in!", category='success')
                 login_user(user, remember=True)
                 return redirect(url_for('views.home'))
             else:
@@ -53,7 +81,6 @@ def sign_up():
             profile_picture_filename = None
             if profile_picture and profile_picture.filename:
                 profile_picture_filename = secure_filename(profile_picture.filename)
-                # Ensure the uploads directory exists
                 uploads_dir = os.path.join('applicaton', 'static', 'uploads')
                 os.makedirs(uploads_dir, exist_ok=True)
                 profile_picture.save(os.path.join(uploads_dir, profile_picture_filename))
@@ -67,7 +94,7 @@ def sign_up():
             db.session.add(new_user)
             db.session.commit()
             login_user(new_user, remember=True)
-            flash('User created!')
+            flash('User created!', category='success')
             return redirect(url_for('views.home'))
     return render_template("signup.html", user=current_user)
 

@@ -1,4 +1,5 @@
-{% extends "nav.html"%}{% block title %}Login{% endblock %}
+{% extends "nav.html" %}
+{% block title %}Login{% endblock %}
 {% block content %}
 <form method="POST">
     <h3 align="center">Login</h3>
@@ -8,10 +9,14 @@
         <label for="password">Password</label>
         <input type="password" id="password" name="password" class="form-control" placeholder="Enter Password" />
         <br />
+        <!-- Add reCAPTCHA widget -->
+        <div class="g-recaptcha" data-sitekey="6Lf41v4qAAAAAHYauxeepmRqtz-ltw-EQ9LuXOtE"></div>
+        <br />
         <div align="center">
             <button class="btn btn-primary" type="submit">Login</button>
         </div>
     </div>
 </form>
-
+<!-- Include reCAPTCHA script -->
+<script src="https://www.google.com/recaptcha/api.js" async defer></script>
 {% endblock %}

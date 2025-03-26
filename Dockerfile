@@ -1,14 +1,20 @@
-FROM python:3.11-slim
+# Use the official Python image as the base image
+FROM python:3.9-slim
 
+# Set the working directory
 WORKDIR /app
+
+# Copy the requirements file
+COPY requirements.txt .
+
+# Install dependencies
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy the rest of the application code
 COPY . .
 
-# Upgrade pip and install dependencies with increased timeout
-RUN pip install --upgrade pip --default-timeout=100 && \
-    pip install -r requirements.txt --default-timeout=100
-
-# Ensure gunicorn is installed
-RUN pip install gunicorn --default-timeout=100
-
+# Expose the port the app runs on
 EXPOSE 5000
-CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:5000", "app:app"]
+
+# Command to run the app with gunicorn
+CMD ["gunicorn", "--bind", "0.0.0.0:5000", "app:app"]

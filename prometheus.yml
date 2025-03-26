@@ -3,6 +3,6 @@ global:
 
 scrape_configs:
   - job_name: 'bloglite'
-    metrics_path: /prometheus/metrics
+    metrics_path: /prometheus/metrics  # Specify the correct endpoint
     static_configs:
       - targets: ['bloglite:5000']

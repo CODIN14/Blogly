@@ -384,13 +384,43 @@ def clear_notifications():
     return redirect(url_for('views.notifications'))
 
 @views.route('/user_engagement/<int:user_id>')
+@login_required
 def user_engagement(user_id):
-    # Retrieve the user engagement data from the API
-    user_engagement = requests.get(
-        f'http://localhost:5000/api/user_engagement/{user_id}').json()
-    nested_dict = user_engagement['user_engagement']
-    # Render the user engagement template and pass the data to it
-    return render_template('user_engagement.html', user_engagement=nested_dict, user=current_user)
+    # Retrieve the user with the specified ID
+    user = User.query.filter_by(id=user_id).first()
+    
+    if user:
+        # Get the user's name
+        user_name = user.username
+        
+        # Get the user's posts, comments, and likes
+        posts = user.posts
+        comments = user.comments
+        likes = user.likes
+
+        # Calculate the total number of comments and likes for the user
+        total_comments = len(comments)
+        total_likes = len(likes)
+
+        # Calculate the total number of followers and followed users for the user
+        total_followers = user.followers.count()
+        total_following = user.following.count()
+
+        # Create a dictionary to store the user engagement data
+        user_engagement = {
+            'username': user_name,
+            'user_id': user_id,
+            'total_posts': len(posts),
+            'total_comments': total_comments,
+            'total_likes': total_likes,
+            'total_followers': total_followers,
+            'total_following': total_following
+        }
+        
+        # Render the user engagement template and pass the data to it
+        return render_template('user_engagement.html', user_engagement=user_engagement, user=current_user)
+    else:
+        return "Error: User not found.", 404
 
 @views.route("/post/<id>")
 @login_required

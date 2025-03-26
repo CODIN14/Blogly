@@ -4,7 +4,7 @@ from flask_sqlalchemy import SQLAlchemy
 from os import path, getenv
 from flask_login import LoginManager
 from prometheus_client import Counter, Histogram, generate_latest, CollectorRegistry, REGISTRY
-import time  # Added for request timing
+import time
 
 # Create a SQLAlchemy object for database management
 db = SQLAlchemy()
