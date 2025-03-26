@@ -115,5 +115,38 @@
       });
     });
   </script>
+
+    <!-- Auto-Logout Script -->
+    <script>
+      let inactivityTimeout;
+      const INACTIVITY_LIMIT = 60 * 1000; // 15 minutes in milliseconds
+  
+      function resetInactivityTimer() {
+        clearTimeout(inactivityTimeout);
+        // Only set the timer if the user is authenticated
+        if ("{{ user.is_authenticated | tojson }}") {
+          inactivityTimeout = setTimeout(logoutUser, INACTIVITY_LIMIT);
+        }
+      }
+  
+      function logoutUser() {
+        // Redirect to logout route
+        window.location.href = "{{ url_for('authentication.log_out') }}";
+      }
+  
+      // Reset timer on user activity
+      window.addEventListener('mousemove', resetInactivityTimer);
+      window.addEventListener('keypress', resetInactivityTimer);
+      window.addEventListener('click', resetInactivityTimer);
+  
+      // Start the timer when the page loads (if user is authenticated)
+      document.addEventListener('DOMContentLoaded', function() {
+        if ("{{ user.is_authenticated | tojson | safe }}") {
+          resetInactivityTimer();
+        }
+      });
+    </script>
+  </body>
+  </html>
 </body>
 </html>

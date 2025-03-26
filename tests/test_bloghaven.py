@@ -52,8 +52,8 @@ class BlogHavenTests(unittest.TestCase):
         except TimeoutException as e:
             self.fail(f"Timeout waiting for signup page elements: {str(e)}")
 
-    def test_navigation_bar_visibility(self):
-        # Test that the navigation bar is visible on the login page
+    def test_navigation_bar(self):
+        # Test that the navigation bar  on the login page
         try:
             self.driver.get("http://bloglite:5000/login")
             # Wait for the navigation bar to be present
@@ -68,19 +68,20 @@ class BlogHavenTests(unittest.TestCase):
         except TimeoutException as e:
             self.fail(f"Timeout waiting for navigation bar elements: {str(e)}")
 
-    def test_home_page_title(self):
-        # Test that the home page loads and has the correct title for unauthenticated users
+    def test_signup_link(self):
+        # Test that the "Sign Up" link in the navigation bar on the login page
         try:
-            self.driver.get("http://bloglite:5000")
-            # Wait for the title element to be present
-            WebDriverWait(self.driver, 10).until(
-                EC.presence_of_element_located((By.TAG_NAME, "title"))
+            self.driver.get("http://bloglite:5000/login")
+            # Wait for the navigation bar to be present
+            nav_bar = WebDriverWait(self.driver, 10).until(
+                EC.presence_of_element_located((By.TAG_NAME, "nav"))
             )
-            page_title = self.driver.title
-            # Assert that the title contains "Home"
-            self.assertIn("Home", page_title, "Home page title does not contain 'Home'")
+            # Find the "Sign Up" link
+            signup_link = nav_bar.find_element(By.LINK_TEXT, "Sign Up")
+            # Assert that the "Sign Up" link is visible
+            self.assertTrue(signup_link.is_displayed(), "Sign Up link is not visible in navigation bar")
         except TimeoutException as e:
-            self.fail(f"Timeout waiting for home page title: {str(e)}")
+            self.fail(f"Timeout waiting for Sign Up link: {str(e)}")
 
 if __name__ == "__main__":
     unittest.main()

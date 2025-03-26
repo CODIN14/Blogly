@@ -5,6 +5,7 @@ services:
       - "5000:5000"
     volumes:
       - ./instance:/app/instance
+      - ./applicaton/static/uploads:/app/applicaton/static/uploads
     networks:
       - bloglite-network
   prometheus:
