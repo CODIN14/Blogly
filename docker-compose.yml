@@ -1,3 +1,5 @@
+version: '3.8'
+
 services:
   bloglite:
     build: .
@@ -6,32 +8,9 @@ services:
     volumes:
       - ./instance:/app/instance
       - ./applicaton/static/uploads:/app/applicaton/static/uploads
-    networks:
-      - bloglite-network
-  prometheus:
-    image: prom/prometheus:latest
-    ports:
-      - "9090:9090"
-    volumes:
-      - ./prometheus.yml:/etc/prometheus/prometheus.yml
-    networks:
-      - bloglite-network
-  grafana:
-    image: grafana/grafana:latest
-    ports:
-      - "3000:3000"
-    volumes:
-      - grafana-data:/var/lib/grafana
-    networks:
-      - bloglite-network
-  selenium:
-    image: selenium/standalone-chrome:latest
-    ports:
-      - "4444:4444"
-    networks:
-      - bloglite-network
-networks:
-  bloglite-network:
-    driver: bridge
-volumes:
-  grafana-data:
+    environment:
+      - FLASK_ENV=production
+      - FLASK_APP=applicaton
+      - FLASK_DEBUG=0
+      - FLASK_RUN_HOST=0.0.0.0
+      - FLASK_RUN_PORT=5000
